@@ -1,0 +1,250 @@
+:root {
+  --primary-green: #1a7e3c;
+  --dark-green: #145e2d;
+  --light-green: #e9f5ed;
+  --accent-yellow: #fbc02d;
+  --text-gray: #5f6368;
+  --border-color: #dadce0;
+  --bg-white: #ffffff;
+  --transition-speed: 0.3s;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background-color: #f8f9fa;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.main-wrapper {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-white);
+}
+
+/* --- Animations --- */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(25px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseWarning {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); background-color: #fff3d0; }
+  100% { transform: scale(1); }
+}
+
+@keyframes floatBg {
+  0% { background-position: 20% 30%, 80% 80%; }
+  50% { background-position: 25% 35%, 75% 75%; }
+  100% { background-position: 20% 30%, 80% 80%; }
+}
+
+/* --- Left Panel --- */
+.left-panel {
+  flex: 1.2;
+  background-color: var(--primary-green);
+  background-image: radial-gradient(circle at 20% 30%, #22a44e 0%, transparent 40%),
+                    radial-gradient(circle at 80% 80%, #145e2d 0%, transparent 50%);
+  background-size: 200% 200%;
+  color: white;
+  padding: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  animation: slideInLeft 0.8s ease-out, floatBg 12s ease-in-out infinite;
+}
+
+.branding {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  animation: fadeInUp 0.8s ease 0.2s both;
+}
+
+.logo {
+  width: 70px;
+  height: 70px;
+  background: white;
+  border-radius: 15px;
+  padding: 10px;
+  transition: transform var(--transition-speed);
+}
+
+.logo:hover { transform: rotate(-5deg) scale(1.08); }
+.logo img { width: 55px; }
+
+.brand-name { font-size: 2.5rem; font-weight: 700; }
+.brand-name span { color: var(--accent-yellow); }
+
+.hero-text h2 {
+  font-size: 2.5rem;
+  margin-bottom: 25px;
+  animation: fadeInUp 0.8s ease 0.3s both;
+}
+
+.hero-text p {
+  font-size: 1.1rem;
+  opacity: 0.85;
+  animation: fadeInUp 0.8s ease 0.5s both;
+}
+
+/* --- Stats --- */
+.stats-container { display: flex; gap: 50px; }
+.stat-item { animation: fadeInUp 0.6s ease-out both; transition: 0.3s; }
+.stat-item:nth-child(1) { animation-delay: 0.6s; }
+.stat-item:nth-child(2) { animation-delay: 0.7s; }
+.stat-item:nth-child(3) { animation-delay: 0.8s; }
+
+.stat-number {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--accent-yellow);
+  text-shadow: 0 0 15px rgba(251, 192, 45, 0.3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Right Panel --- */
+.right-panel {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+  position: relative;
+}
+
+/* --- Login Box --- */
+.login-box {
+  width: 100%;
+  max-width: 450px;
+  transition: 0.4s;
+}
+
+.login-box h2 { text-align: center; margin-bottom: 10px; color: #333; }
+.subtitle { text-align: center; margin-bottom: 30px; color: var(--text-gray); }
+
+/* --- CLEANED OFFICE INFO BOX (CSS ONLY) --- */
+.office-info-box {
+  background-color: var(--light-green);
+  border: 1.5px solid rgba(26, 126, 60, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 25px;
+  display: flex;
+  flex-direction: column; /* Stacks ID and Select nicely */
+  gap: 8px;
+  position: relative;
+}
+
+/* Replaces the messy emoji/label look */
+.office-info-box::before {
+  content: "OFFICE CONFIGURATION";
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--primary-green);
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+#officeSelect {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%231a7e3c' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C2.185 5.355 2.408 5 2.811 5h10.378c.413 0 .636.355.37.658l-4.796 5.482a1 1 0 0 1-1.517 0z'/%3E%3C/svg%3E") no-repeat calc(100% - 12px) center;
+  appearance: none;
+  cursor: pointer;
+  color: #333;
+}
+
+.office-id-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--dark-green);
+  background: rgba(255,255,255,0.6);
+  padding: 4px 10px;
+  border-radius: 5px;
+  display: inline-block;
+  align-self: flex-start;
+  border-left: 3px solid var(--accent-yellow);
+}
+
+.office-icon { display: none; } /* Hide the old emoji if possible */
+
+/* --- Form --- */
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: #444; }
+
+.input-wrapper input {
+  width: 100%;
+  padding: 15px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
+  transition: 0.25s;
+  font-size: 1rem;
+}
+
+.input-wrapper input:focus {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 12px rgba(26, 126, 60, 0.2);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+/* --- Button --- */
+.btn-login {
+  width: 100%;
+  padding: 16px;
+  background-color: var(--primary-green);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: 0.3s;
+  box-shadow: 0 4px 10px rgba(26, 126, 60, 0.2);
+}
+
+.btn-login:hover {
+  background-color: var(--dark-green);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(26, 126, 60, 0.3);
+}
+
+/* --- Alerts --- */
+.info-alert {
+  background-color: #fff8e1;
+  color: #856404;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  margin-bottom: 20px;
+  border: 1px solid #ffeeba;
+  animation: pulseWarning 4s infinite;
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+  body { overflow-y: auto; }
+  .main-wrapper { flex-direction: column; height: auto; }
+  .left-panel, .right-panel { width: 100%; padding: 40px 20px; }
+  .hero-text h2 { font-size: 2rem; }
+}

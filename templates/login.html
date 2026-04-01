@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QueueLK For Office Admins</title>
+
+  <link rel="icon" type="image/png" href="/static/images/withbackground.png">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="/static/css/login.css">
+</head>
+
+<body>
+
+  <div class="main-wrapper">
+
+    <!-- Left Panel -->
+    <div class="left-panel">
+      <div class="branding">
+        <div class="logo">
+          <img src="/static/images/logo1.png" alt="Logo">
+        </div>
+        <div>
+          <h1 class="brand-name">Queue<span>LK</span></h1>
+          <p class="brand-sub">Admin Dashboard</p>
+        </div>
+      </div>
+
+      <div class="hero-text">
+        <h2>Smart Queue Management for Sri Lankan Government Offices</h2>
+        <p>Manage queues, monitor performance, and deliver efficient service to citizens across all 331 Divisional
+          Secretariats.</p>
+      </div>
+
+      <div class="stats-container">
+        <div class="stat-item"><strong class="stat-number" data-target="331">0</strong>DS Offices</div>
+        <div class="stat-item"><strong class="stat-number" data-target="22">0</strong>Million Citizens</div>
+        <div class="stat-item"><strong class="stat-number" data-target="25">0</strong>Districts</div>
+      </div>
+      
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <div class="login-box">
+        <h2>Office Admin Login</h2>
+        <p class="subtitle">Sign in to manage your office queue</p>
+
+        <form action="/login" method="POST">
+
+          <div class="office-info-box">
+            <span class="office-icon">🏛️</span>
+            <div class="office-details">
+              <select name="office_id" id="officeSelect" required onchange="updateOfficeID()">
+                <option value="">Loading offices...</option>
+              </select>
+              <div id="officeIdDisplay" class="office-id-text">
+                Office ID: Select to see ID
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Office Email</label>
+            <div class="input-wrapper">
+              <input type="email" name="email" placeholder="admin@dskandy.gov.lk" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label> Office Password</label>
+            <div class="input-wrapper">
+              <input type="password" name="password" id="passwordField" placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <div class="info-alert">
+            🔒 All staff at this office Gets a password from the System Admin. Contact System Admin to reset.
+          </div>
+
+          {% if error %}
+          <p class="error-msg">⚠️ {{ error }}</p>
+          {% endif %}
+
+          <button type="submit" class="btn-login">
+            Sign In to Office
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- External JS -->
+  <script src="/static/js/login.js"></script>
+
+</body>
+
+</html>
