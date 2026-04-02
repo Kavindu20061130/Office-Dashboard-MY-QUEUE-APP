@@ -1,0 +1,76 @@
+from flask import Blueprint, render_template, request, redirect, jsonify, session
+from firebase_config import db
+
+login = Blueprint("login", __name__)
+
+# LOGIN PAGE
+@login.route("/")
+def index():
+    return render_template("login.html")
+
+
+# GET OFFICES (for dropdown)
+@login.route("/get-offices")
+def get_offices():
+    try:
+        offices_ref = db.collection("OFFICES")
+        docs = offices_ref.stream()
+
+        office_list = []
+
+        for doc in docs:
+            data = doc.to_dict()
+            office_list.append({
+                "id": doc.id,
+                "name": data.get("name", "No Name")
+            })
+
+        return jsonify(office_list)
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+# LOGIN LOGIC
+@login.route("/login", methods=["POST"])
+def do_login():
+    selected_office_id = request.form.get("office_id")
+    email = request.form.get("email").strip()
+    password = request.form.get("password").strip()
+
+    officers = db.collection("OFFICERS").where("email", "==", email).limit(1).stream()
+
+    officer = None
+    for doc in officers:
+        officer = doc.to_dict()
+        break
+
+    if not officer:
+        return render_template("login.html", error="Email not found")
+
+    if officer.get("passwordHash") != password:
+        return render_template("login.html", error="Wrong password")
+
+    office_ref = officer.get("officeId")
+
+    if hasattr(office_ref, "path"):
+        office_path = office_ref.path
+    else:
+        office_path = str(office_ref)
+
+    expected_path = f"OFFICES/{selected_office_id}"
+
+    if not office_path.endswith(expected_path):
+        return render_template("login.html", error="Not authorized for this office")
+
+    session["user"] = officer.get("name")
+    session["office"] = selected_office_id
+
+    return redirect("/dashboard")
+
+
+# LOGOUT
+@login.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
