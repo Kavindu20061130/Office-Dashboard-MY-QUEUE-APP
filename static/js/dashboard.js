@@ -26,21 +26,30 @@ function updateClock() {
 
     const timeString = now.toLocaleTimeString('en-US', optionsTime);
     const dateString = now.toLocaleDateString('en-GB', optionsDate);
-    const hours = now.getHours();
 
-    // Set time & date
-    document.getElementById("live-clock").innerText = timeString;
-    document.getElementById("current-date").innerText = dateString;
+    // Use Colombo hour (IMPORTANT FIX)
+    const colomboHour = new Date(
+        now.toLocaleString("en-US", { timeZone: "Asia/Colombo" })
+    ).getHours();
+
+    // Set time & date safely
+    const clockEl = document.getElementById("live-clock");
+    const dateEl = document.getElementById("current-date");
+
+    if (clockEl) clockEl.innerText = timeString;
+    if (dateEl) dateEl.innerText = dateString;
 
     // Greeting
     let greet = "Good Evening";
-    if (hours < 12) greet = "Good Morning";
-    else if (hours < 17) greet = "Good Afternoon";
+    if (colomboHour < 12) greet = "Good Morning";
+    else if (colomboHour < 17) greet = "Good Afternoon";
 
     const cleanOfficeName = decodeHTML(OFFICE_NAME || "");
+    const greetingEl = document.getElementById("greeting-title");
 
-    document.getElementById("greeting-title").innerText =
-        `${greet}, ${cleanOfficeName}`;
+    if (greetingEl) {
+        greetingEl.innerText = `${greet}, ${cleanOfficeName}`;
+    }
 
     // STATUS
     const statusBtn = document.getElementById("status-btn");
@@ -68,13 +77,17 @@ function isOfficeOpen(now) {
     const [openH, openM] = OPEN_TIME.split(":").map(Number);
     const [closeH, closeM] = CLOSE_TIME.split(":").map(Number);
 
-    const open = new Date(now);
+    const colomboNow = new Date(
+        now.toLocaleString("en-US", { timeZone: "Asia/Colombo" })
+    );
+
+    const open = new Date(colomboNow);
     open.setHours(openH, openM, 0);
 
-    const close = new Date(now);
+    const close = new Date(colomboNow);
     close.setHours(closeH, closeM, 0);
 
-    return now >= open && now < close;
+    return colomboNow >= open && colomboNow < close;
 }
 
 // ================= MODAL =================
@@ -89,13 +102,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (openEl) openEl.innerText = OPEN_TIME || "Not set";
     if (closeEl) closeEl.innerText = CLOSE_TIME || "Not set";
 
-    if (statusBtn) {
+    if (statusBtn && modal) {
         statusBtn.addEventListener("click", () => {
             modal.style.display = "flex";
         });
     }
 
-    if (closeBtn) {
+    if (closeBtn && modal) {
         closeBtn.addEventListener("click", () => {
             modal.style.display = "none";
         });
@@ -111,23 +124,3 @@ document.addEventListener("DOMContentLoaded", () => {
 // ================= RUN CLOCK =================
 setInterval(updateClock, 1000);
 updateClock();
-
-// ================= TOKENS AUTO REFRESH (FAST & CLEAN) =================
-async function refreshTokensToday() {
-    try {
-        const res = await fetch('/get-tokens-today');
-        const data = await res.json();
-
-        const el = document.getElementById("tokens-today");
-        if (el && data.tokens_today !== undefined) {
-            el.innerText = data.tokens_today;
-        }
-
-    } catch (error) {
-        console.error("Token refresh error:", error);
-    }
-}
-
-// Run every 10 seconds (faster than before)
-setInterval(refreshTokensToday, 10000);
-refreshTokensToday();

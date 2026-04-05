@@ -71,7 +71,7 @@ def do_login():
 
     # Login success
     session["user"] = officer.get("name")
-    session["office"] = selected_office_id
+    session["office_id"] = selected_office_id
 
     # Do not flash success here (prevents stacking issue)
     return redirect("/dashboard")
