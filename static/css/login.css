@@ -240,6 +240,24 @@ body {
   animation: pulseWarning 4s infinite;
 }
 
+/* --- Custom Error (like your screenshot) --- */
+.custom-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+  font-size: 15px;
+  margin: 10px 0 15px 0;
+  font-weight: 500;
+}
+
+/* icon */
+.custom-error::before {
+  content: "⚠️";
+  font-size: 16px;
+}
+
+
 /* --- Responsive --- */
 @media (max-width: 900px) {
   body { overflow-y: auto; }
@@ -247,12 +265,5 @@ body {
   .left-panel, .right-panel { width: 100%; padding: 40px 20px; }
   .hero-text h2 { font-size: 2rem; }
 
-  .error-msg {
-  background: #ffe5e5;
-  color: #b30000;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 15px;
-  font-size: 14px;
-}
+
 }
