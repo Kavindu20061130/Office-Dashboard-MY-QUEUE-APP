@@ -8,7 +8,7 @@
 
   <link rel="icon" type="image/png" href="/static/images/withbackground.png">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-  
+
 
   <!-- External CSS -->
   <link rel="stylesheet" href="/static/css/login.css">
@@ -41,7 +41,7 @@
         <div class="stat-item"><strong class="stat-number" data-target="22">0</strong>Million Citizens</div>
         <div class="stat-item"><strong class="stat-number" data-target="25">0</strong>Districts</div>
       </div>
-      
+
     </div>
 
     <!-- Right Panel -->
@@ -79,12 +79,21 @@
           </div>
 
           <div class="info-alert">
-            🔒 All staff at this office Gets a password from the System Admin. Contact System Admin to reset.
+            🔒 All staff at this office Gets a password from the My Queue Administration. Contact My Queue
+            Administration to
+            reset.
           </div>
 
-          {% if error %}
-          <p class="error-msg">⚠️ {{ error }}</p>
+
+          {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+          {% for category, message in messages %}
+          <div class="custom-error">
+            {{ message }}
+          </div>
+          {% endfor %}
           {% endif %}
+          {% endwith %}
 
           <button type="submit" class="btn-login">
             Sign In to Office

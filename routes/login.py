@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, jsonify, session
+from flask import Blueprint, render_template, request, redirect, jsonify, session, flash
 from firebase_config import db
 
 login = Blueprint("login", __name__)
@@ -7,7 +7,6 @@ login = Blueprint("login", __name__)
 @login.route("/")
 def index():
     return render_template("login.html")
-
 
 # GET OFFICES (for dropdown)
 @login.route("/get-offices")
@@ -34,6 +33,7 @@ def get_offices():
 # LOGIN LOGIC
 @login.route("/login", methods=["POST"])
 def do_login():
+
     selected_office_id = request.form.get("office_id")
     email = request.form.get("email").strip()
     password = request.form.get("password").strip()
@@ -45,12 +45,17 @@ def do_login():
         officer = doc.to_dict()
         break
 
+    # Email not found
     if not officer:
-        return render_template("login.html", error="Email not found")
+        flash("Email not found", "error")
+        return redirect("/")
 
+    # Wrong password
     if officer.get("passwordHash") != password:
-        return render_template("login.html", error="Wrong password")
+        flash("Wrong password", "error")
+        return redirect("/")
 
+    # Check office authorization
     office_ref = officer.get("officeId")
 
     if hasattr(office_ref, "path"):
@@ -61,11 +66,14 @@ def do_login():
     expected_path = f"OFFICES/{selected_office_id}"
 
     if not office_path.endswith(expected_path):
-        return render_template("login.html", error="Not authorized for this office")
+        flash("Not authorized for this office", "error")
+        return redirect("/")
 
+    # Login success
     session["user"] = officer.get("name")
     session["office"] = selected_office_id
 
+    # Do not flash success here (prevents stacking issue)
     return redirect("/dashboard")
 
 
@@ -73,4 +81,5 @@ def do_login():
 @login.route("/logout")
 def logout():
     session.clear()
+    flash("Logged out successfully", "success")
     return redirect("/")
