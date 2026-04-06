@@ -2,6 +2,7 @@ from flask import Flask
 
 from routes.login import login
 from routes.dashboard import dashboard
+from routes.counterdashboard import counterdashboard
 #from routes.queue import queue
 #from routes.counter import counter
 #from routes.scanner import scanner
@@ -20,6 +21,7 @@ def add_header(response):
 # Register all routes
 app.register_blueprint(login)
 app.register_blueprint(dashboard)
+app.register_blueprint(counterdashboard)
 #app.register_blueprint(queue)
 #app.register_blueprint(counter)
 #app.register_blueprint(scanner)

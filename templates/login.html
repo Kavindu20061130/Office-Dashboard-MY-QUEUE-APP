@@ -4,13 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QueueLK For Office Admins</title>
-
+  <title>QueueLK | Login</title>
   <link rel="icon" type="image/png" href="/static/images/withbackground.png">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-
-  <!-- External CSS -->
   <link rel="stylesheet" href="/static/css/login.css">
 </head>
 
@@ -18,7 +14,7 @@
 
   <div class="main-wrapper">
 
-    <!-- Left Panel -->
+    <!-- Left Panel: Branding & Stats -->
     <div class="left-panel">
       <div class="branding">
         <div class="logo">
@@ -41,19 +37,33 @@
         <div class="stat-item"><strong class="stat-number" data-target="22">0</strong>Million Citizens</div>
         <div class="stat-item"><strong class="stat-number" data-target="25">0</strong>Districts</div>
       </div>
-
     </div>
 
-    <!-- Right Panel -->
+    <!-- Right Panel: Login Form -->
     <div class="right-panel">
       <div class="login-box">
-        <h2>Office Admin Login</h2>
-        <p class="subtitle">Sign in to manage your office queue</p>
 
-        <form action="/login" method="POST">
+        <!-- Role Toggle Switch -->
+        <div class="role-selector">
+          <input type="radio" id="roleCounter" name="role" value="counter" checked onclick="toggleRole('counter')">
+          <label for="roleCounter" class="role-label">Counter</label>
 
+          <input type="radio" id="roleAdmin" name="role" value="admin" onclick="toggleRole('admin')">
+          <label for="roleAdmin" class="role-label">Admin</label>
+
+          <div class="role-slider"></div>
+        </div>
+
+        <h2 id="loginTitle">Counter Login</h2>
+        <p class="subtitle" id="loginSubtitle">Sign in to manage your counter's service queue</p>
+
+        <!-- autocomplete="off" stops the browser from auto-filling old data -->
+        <form action="/login" method="POST" autocomplete="off">
+
+          <input type="hidden" name="user_role" id="userRoleInput" value="counter">
+
+          <!-- Office Selection -->
           <div class="office-info-box">
-            <span class="office-icon">🏛️</span>
             <div class="office-details">
               <select name="office_id" id="officeSelect" required onchange="updateOfficeID()">
                 <option value="">Loading offices...</option>
@@ -64,39 +74,40 @@
             </div>
           </div>
 
+          <!-- USERNAME FIELD -->
           <div class="form-group">
-            <label>Office Email</label>
+            <label id="userLabel">Counter Username</label>
             <div class="input-wrapper">
-              <input type="email" name="email" placeholder="admin@dskandy.gov.lk" required>
+              <input type="text" name="email" id="userInput" placeholder="e.g. iamsaman" required
+                autocomplete="new-password">
             </div>
           </div>
 
+          <!-- PASSWORD FIELD -->
           <div class="form-group">
-            <label> Office Password</label>
+            <label id="passLabel">Password</label>
             <div class="input-wrapper">
-              <input type="password" name="password" id="passwordField" placeholder="••••••••" required>
+              <input type="password" name="password" id="passwordField" placeholder="••••••••" required
+                autocomplete="new-password">
             </div>
           </div>
 
-          <div class="info-alert">
-            🔒 All staff at this office Gets a password from the My Queue Administration. Contact My Queue
-            Administration to
-            reset.
-          </div>
+          <!-- Security Message -->
+          <div id="infoAlert" class="info-alert"></div>
 
-
+          <!-- Flash Messages -->
           {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-          {% for category, message in messages %}
-          <div class="custom-error">
-            {{ message }}
-          </div>
-          {% endfor %}
-          {% endif %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="custom-{{ category }}">
+                  {{ message }}
+                 </div>
+              {% endfor %}
+            {% endif %}
           {% endwith %}
 
-          <button type="submit" class="btn-login">
-            Sign In to Office
+          <button type="submit" class="btn-login" id="submitBtn">
+            Sign In to Counter
           </button>
         </form>
       </div>
@@ -104,9 +115,7 @@
 
   </div>
 
-  <!-- External JS -->
   <script src="/static/js/login.js"></script>
-
 </body>
 
 </html>

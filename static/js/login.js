@@ -1,58 +1,338 @@
-function updateOfficeID() {  // Function to update displayed office ID
-  const select = document.getElementById('officeSelect');  // Get dropdown element
-  const display = document.getElementById('officeIdDisplay');  // Get display element
+/**
+ * Login Page Controller
+ * Professional implementation with modular pattern and event delegation
+ */
+(function() {
+    'use strict';
 
-  if (select.value) {  // Check if an option is selected
-    const idNumber = select.value.split('_')[1];  // Extract number after underscore
-    display.textContent = "Office ID-" + idNumber;  // Show formatted office ID
-  } else {  // If nothing selected
-    display.textContent = "Office ID: Select to see ID";  // Show default message
-  }
-}
+    // ==========================
+    // DOM Elements Cache
+    // ==========================
+    const DOM = {
+        officeSelect: null,
+        officeIdDisplay: null,
+        roleCounter: null,
+        roleAdmin: null,
+        userRoleInput: null,
+        userInput: null,
+        passwordField: null,
+        loginTitle: null,
+        loginSubtitle: null,
+        submitBtn: null,
+        userLabel: null,
+        infoAlert: null
+    };
 
+    // ==========================
+    // Utility Functions
+    // ==========================
+    const utils = {
+        /**
+         * Safely get element by ID with console warning if missing
+         */
+        getElement(id) {
+            const el = document.getElementById(id);
+            if (!el) console.warn(`Element with id "${id}" not found`);
+            return el;
+        },
 
-document.addEventListener("DOMContentLoaded", () => {  // Run when page loads
-    const counters = document.querySelectorAll('.stat-number');  // Get all counter elements
-    const speed = 200;  // Control animation speed
+        /**
+         * Add CSS styles dynamically (self-contained)
+         */
+        injectCloseButtonStyles() {
+            if (document.getElementById('flash-close-styles')) return;
+            const style = document.createElement('style');
+            style.id = 'flash-close-styles';
+            style.textContent = `
+                .custom-success, .custom-error {
+                    position: relative;
+                    padding-right: 35px !important;
+                }
+                .flash-close-btn {
+                    position: absolute;
+                    top: 50%;
+                    right: 12px;
+                    transform: translateY(-50%);
+                    cursor: pointer;
+                    font-size: 20px;
+                    font-weight: bold;
+                    color: inherit;
+                    opacity: 0.7;
+                    transition: opacity 0.2s;
+                    line-height: 1;
+                }
+                .flash-close-btn:hover {
+                    opacity: 1;
+                }
+            `;
+            document.head.appendChild(style);
+        },
 
-    counters.forEach(counter => {  // Loop through each counter
-        const updateCount = () => {  // Function to update counter
-            const target = +counter.getAttribute('data-target');  // Get target value
-            const count = +counter.innerText;  // Get current value
+        /**
+         * Remove flash message with fade-out effect
+         */
+        removeFlashMessage(flashElement) {
+            flashElement.style.transition = 'opacity 0.3s ease';
+            flashElement.style.opacity = '0';
+            setTimeout(() => flashElement.remove(), 300);
+        }
+    };
 
-            const inc = target / speed;  // Calculate increment value
+    // ==========================
+    // Flash Message Handler
+    // ==========================
+    const FlashManager = {
+        /**
+         * Add close button to a single flash message
+         */
+        addCloseButton(flashMsg) {
+            if (flashMsg.querySelector('.flash-close-btn')) return;
 
-            if (count < target) {  // If current value is less than target
-                counter.innerText = Math.ceil(count + inc);  // Increase value
-                setTimeout(updateCount, 10);  // Repeat after delay
-            } else {  // If target reached
-                counter.innerText = target;  // Set final value
+            const closeBtn = document.createElement('span');
+            closeBtn.innerHTML = '&times;';
+            closeBtn.className = 'flash-close-btn';
+            closeBtn.setAttribute('aria-label', 'Close');
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                utils.removeFlashMessage(flashMsg);
+            });
+
+            flashMsg.style.position = 'relative';
+            flashMsg.appendChild(closeBtn);
+        },
+
+        /**
+         * Initialize all existing flash messages and observe new ones
+         */
+        init() {
+            utils.injectCloseButtonStyles();
+            // Handle existing messages
+            document.querySelectorAll('.custom-success, .custom-error').forEach(msg => this.addCloseButton(msg));
+
+            // Watch for dynamically added flash messages (e.g., after form submission)
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            if (node.matches && node.matches('.custom-success, .custom-error')) {
+                                this.addCloseButton(node);
+                            } else if (node.querySelectorAll) {
+                                node.querySelectorAll('.custom-success, .custom-error').forEach(msg => this.addCloseButton(msg));
+                            }
+                        }
+                    });
+                });
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+    };
+
+    // ==========================
+    // UI Controller
+    // ==========================
+    const UIController = {
+        /**
+         * Update displayed office ID
+         */
+        updateOfficeID() {
+            if (DOM.officeSelect && DOM.officeSelect.value) {
+                DOM.officeIdDisplay.textContent = `Office ID-${DOM.officeSelect.value}`;
+            } else if (DOM.officeIdDisplay) {
+                DOM.officeIdDisplay.textContent = 'Office ID: Select to see ID';
             }
-        };
+        },
 
-        updateCount();  // Start counter animation
-    });
-});
+        /**
+         * Toggle between Admin and Counter role
+         */
+        toggleRole(role) {
+            if (!DOM.userRoleInput) return;
 
+            DOM.userRoleInput.value = role;
 
-async function loadOffices() {
-  try {
-    const response = await fetch('/get-offices');
-    const data = await response.json();
+            // Clear sensitive fields
+            if (DOM.userInput) DOM.userInput.value = '';
+            if (DOM.passwordField) DOM.passwordField.value = '';
 
-    const select = document.getElementById('officeSelect');
-    select.innerHTML = '<option value="">-- Select Office --</option>';
+            const isAdmin = role === 'admin';
+            DOM.loginTitle.innerText = isAdmin ? 'Office Admin Login' : 'Counter Login';
+            DOM.loginSubtitle.innerText = isAdmin
+                ? 'Sign in to manage your office configuration'
+                : 'Sign in to manage your counter\'s service queue';
+            DOM.userLabel.innerText = isAdmin ? 'Administrator Email' : 'Counter Username';
+            DOM.userInput.placeholder = isAdmin ? 'e.g. admin@office.gov.lk' : 'e.g. samancounter@drp';
+            DOM.submitBtn.innerText = isAdmin ? 'Sign In as Admin' : 'Sign In to Counter';
+            DOM.infoAlert.innerHTML = isAdmin
+                ? '🔒 Passwords for Office Admins are provided by <b>My Queue Administration</b>.'
+                : '🔒 Passwords for Counters are provided by your <b>Local Office Admin</b>.';
+        },
 
-    data.forEach(office => {
-      let option = document.createElement('option');
-      option.value = office.id;
-      option.textContent = office.name;
-      select.appendChild(option);
-    });
+        /**
+         * Reset entire form to Counter login state
+         */
+        resetToCounter() {
+            if (DOM.roleCounter) DOM.roleCounter.checked = true;
+            if (DOM.roleAdmin) DOM.roleAdmin.checked = false;
+            this.toggleRole('counter');
 
-  } catch (err) {
-    console.error("Error loading offices:", err);
-  }
-}
+            if (DOM.officeSelect) DOM.officeSelect.value = '';
+            if (DOM.userInput) DOM.userInput.value = '';
+            if (DOM.passwordField) DOM.passwordField.value = '';
+            if (DOM.officeIdDisplay) DOM.officeIdDisplay.textContent = 'Office ID: Select to see ID';
 
-window.onload = loadOffices;  // Call function when page fully loads
+            // Clear stored session artifacts
+            sessionStorage.removeItem('userRole');
+            sessionStorage.removeItem('userToken');
+            localStorage.removeItem('rememberedRole');
+        },
+
+        /**
+         * Animate stat counters
+         */
+        startStatCounters() {
+            const counters = document.querySelectorAll('.stat-number');
+            const speed = 200;
+
+            counters.forEach(counter => {
+                const target = parseInt(counter.getAttribute('data-target'), 10);
+                if (isNaN(target)) return;
+
+                let current = 0;
+                const increment = target / speed;
+                const update = () => {
+                    current += increment;
+                    if (current < target) {
+                        counter.innerText = Math.ceil(current);
+                        requestAnimationFrame(update);
+                    } else {
+                        counter.innerText = target;
+                    }
+                };
+                update();
+            });
+        }
+    };
+
+    // ==========================
+    // Data Service
+    // ==========================
+    const OfficeService = {
+        /**
+         * Fetch offices from backend and populate select
+         */
+        async loadOffices() {
+            try {
+                const response = await fetch('/get-offices');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const offices = await response.json();
+
+                if (!DOM.officeSelect) return;
+                DOM.officeSelect.innerHTML = '<option value="">-- Select Office --</option>';
+                offices.forEach(office => {
+                    const option = document.createElement('option');
+                    option.value = office.id;
+                    option.textContent = office.name;
+                    DOM.officeSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load offices:', error);
+                if (DOM.officeSelect) {
+                    DOM.officeSelect.innerHTML = '<option value="">Error loading offices</option>';
+                }
+            }
+        }
+    };
+
+    // ==========================
+    // Event Handlers (Delegation)
+    // ==========================
+    const EventHandlers = {
+        /**
+         * Handle role radio changes
+         */
+        onRoleChange(e) {
+            const target = e.target;
+            if (target.id === 'roleCounter' && target.checked) {
+                UIController.toggleRole('counter');
+            } else if (target.id === 'roleAdmin' && target.checked) {
+                UIController.toggleRole('admin');
+            }
+        },
+
+        /**
+         * Handle office selection change
+         */
+        onOfficeChange() {
+            UIController.updateOfficeID();
+        },
+
+        /**
+         * Handle browser back/forward navigation
+         */
+        onPageShow(event) {
+            if (event.persisted || performance.getEntriesByType('navigation')[0]?.type === 'back_forward') {
+                UIController.resetToCounter();
+            }
+        },
+
+        onPopState() {
+            UIController.resetToCounter();
+        }
+    };
+
+    // ==========================
+    // Initialization
+    // ==========================
+    async function init() {
+        // Cache DOM elements
+        DOM.officeSelect = utils.getElement('officeSelect');
+        DOM.officeIdDisplay = utils.getElement('officeIdDisplay');
+        DOM.roleCounter = utils.getElement('roleCounter');
+        DOM.roleAdmin = utils.getElement('roleAdmin');
+        DOM.userRoleInput = utils.getElement('userRoleInput');
+        DOM.userInput = utils.getElement('userInput');
+        DOM.passwordField = utils.getElement('passwordField');
+        DOM.loginTitle = utils.getElement('loginTitle');
+        DOM.loginSubtitle = utils.getElement('loginSubtitle');
+        DOM.submitBtn = utils.getElement('submitBtn');
+        DOM.userLabel = utils.getElement('userLabel');
+        DOM.infoAlert = utils.getElement('infoAlert');
+
+        // Load offices
+        await OfficeService.loadOffices();
+
+        // Reset UI to counter state
+        UIController.resetToCounter();
+
+        // Handle flash messages (add close buttons, observe new ones)
+        FlashManager.init();
+
+        // Check for logout flash message to reset UI
+        const hasLogout = Array.from(document.querySelectorAll('.custom-success, .custom-error')).some(
+            msg => msg.textContent.includes('Logged out successfully')
+        );
+        if (hasLogout) UIController.resetToCounter();
+
+        // Start animations
+        UIController.startStatCounters();
+
+        // Set up event listeners (delegation where possible)
+        if (DOM.roleCounter && DOM.roleAdmin) {
+            document.querySelector('.role-selector')?.addEventListener('change', EventHandlers.onRoleChange);
+        }
+        if (DOM.officeSelect) {
+            DOM.officeSelect.addEventListener('change', EventHandlers.onOfficeChange);
+        }
+
+        // Handle browser navigation
+        window.addEventListener('pageshow', EventHandlers.onPageShow);
+        window.addEventListener('popstate', EventHandlers.onPopState);
+    }
+
+    // Start only after DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
