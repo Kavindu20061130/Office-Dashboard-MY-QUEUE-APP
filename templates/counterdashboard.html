@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QueueLK | Counter Dashboard</title>
+    <link rel="icon" type="image/png" href="/static/images/withbackground.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/counterdashboard.css') }}">
+    <!-- Lottie player web component -->
+    <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.10/dist/dotlottie-wc.js" type="module"></script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="sidebar-logo">
+            <img src="/static/images/logo1.png" alt="Logo" onerror="this.style.display='none'">
+            <div class="shield-fallback"><i class="fa-solid fa-shield-halved"></i></div>
+        </div>
+        <div class="sidebar-brand-text">
+            <h2>Queue<span>LK</span></h2>
+            <p id="sidebar-office-name">Loading...</p>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a href="#" class="nav-item active">
+            <i class="fa-solid fa-house"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fa-solid fa-qrcode"></i>
+            <span>QR Scanner</span>
+        </a>
+    </nav>
+
+    <!-- USER SECTION - SHOWS ONLY COUNTER NAME -->
+    <div class="sidebar-user">
+        <div class="user-avatar" id="userAvatar">C</div>
+        <div class="user-info">
+            <div class="user-name" id="sidebar-user-name">Counter 1</div>
+        </div>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="topbar-title" id="topbar-title">Counter Dashboard</div>
+        <div class="topbar-right">
+            <a href="/logout" class="logout-btn">
+                <i class="fa-solid fa-power-off"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- INFO CARDS -->
+    <div class="info-cards">
+        <div class="info-card">
+            <div class="info-card-header">
+                <i class="fa-regular fa-building"></i>
+                <span>Office</span>
+            </div>
+            <div class="info-card-sub">
+                <i class="fa-regular fa-building"></i>
+                <span>Office</span>
+            </div>
+            <div class="info-card-value" id="office">Loading...</div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-card-header">
+                <i class="fa-solid fa-list-ul"></i>
+                <span>Queue</span>
+            </div>
+            <div class="info-card-sub">
+                <i class="fa-solid fa-list-ul"></i>
+                <span>Queue</span>
+            </div>
+            <div class="info-card-value" id="queue">Loading...</div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-card-header">
+                <i class="fa-solid fa-gear"></i>
+                <span>Counter</span>
+            </div>
+            <div class="info-card-sub">
+                <i class="fa-solid fa-desktop"></i>
+                <span>Counter</span>
+            </div>
+            <div class="info-card-value" id="counter">Loading...</div>
+        </div>
+    </div>
+
+    <!-- NOW SERVING BANNER -->
+    <div class="serving-banner" id="servingBanner">
+        <div class="serving-banner-left">
+            <span class="serving-dot"></span>
+            <span class="serving-label">NOW SERVING — <span id="servingQueue">NIC APPLICATION QUEUE</span></span>
+        </div>
+    </div>
+
+    <div class="serving-card" id="servingCard">
+        <div class="serving-token-badge" id="servingToken">--</div>
+        <div class="serving-info">
+            <div class="serving-name" id="servingName">No token serving</div>
+            <div class="serving-meta" id="servingMeta">Service time: — • Started: —</div>
+        </div>
+        <div class="serving-actions" id="servingActions">
+            <button class="action-btn complete" id="completeBtn" onclick="serveCurrentToken()">
+                <i class="fa-solid fa-check"></i> Complete
+            </button>
+            <button class="action-btn skip" id="skipBtn" onclick="skipCurrentToken()">
+                <i class="fa-solid fa-forward"></i> Skip
+            </button>
+            <button class="action-btn cancel" id="cancelBtn" onclick="cancelCurrentToken()">
+                <i class="fa-solid fa-xmark"></i> Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- TOKEN TABLE -->
+    <div class="table-wrapper" id="tableWrapper">
+        <table class="token-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Token</th>
+                    <th>Service</th>
+                    <th>Booked Date &amp; Time</th>
+                    <th>Arrived</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="7" style="text-align:center; padding: 40px; color:#94a3b8;">
+                        Loading tokens...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- FOOTER STATUS -->
+    <div class="table-footer">
+        Last updated: <span id="lastUpdateTime">--:--:--</span>
+        <span id="updateStatus" class="update-status">✓ Auto-refresh ON</span>
+    </div>
+
+</main>
+
+<!-- FLOATING SCROLL BUTTON -->
+<div class="scroll-fab" id="scrollFab" onclick="toggleScroll()">
+    <i class="fa-solid fa-chevron-down" id="scrollIcon"></i>
+    <span class="scroll-tooltip">Scroll to bottom</span>
+</div>
+
+<!-- ARRIVAL TIME MODAL -->
+<div id="arrivalModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Set Arrival Time</h3>
+        <p>Select time when customer arrived</p>
+        <input type="time" id="arrivalTimeInput" step="60">
+        <div class="modal-actions">
+            <button id="saveArrivalBtn" class="modal-btn save">Save</button>
+            <button id="cancelArrivalBtn" class="modal-btn cancel-modal">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- LOADING OVERLAY WITH LOTTIE ANIMATION -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-container">
+        <dotlottie-wc 
+            src="https://lottie.host/d74780ac-3c14-4890-9576-463140287351/fgRUt8Gmmi.lottie" 
+            style="width: 200px; height: 200px" 
+            autoplay 
+            loop>
+        </dotlottie-wc>
+        <p class="loading-text">Loading dashboard data...</p>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/counterdashboard.js') }}"></script>
+</body>
+</html>
