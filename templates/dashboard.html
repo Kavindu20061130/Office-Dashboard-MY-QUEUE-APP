@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QueueLK Dashboard</title>
+    <title>QueueLK |Dashboard</title>
 
     <!-- Fonts & Icons -->
     <link rel="icon" type="image/png" href="/static/images/withbackground.png">
@@ -27,12 +27,31 @@
             </div>
         </div>
 
+        <!-- NAVIGATION -->
         <div class="nav-group">
-            <a href="#" class="nav-item active"><i class="fa-solid fa-house"></i> Dashboard</a>
-            <a href="#" class="nav-item"><i class="fa-solid fa-user-plus"></i> Create Staff Account</a>
-            <a href="#" class="nav-item"><i class="fa-solid fa-list-ul"></i> Queue Management</a>
-            <a href="#" class="nav-item"><i class="fa-solid fa-desktop"></i> Counter Control</a>
-            <a href="#" class="nav-item"><i class="fa-solid fa-qrcode"></i> QR Scanner</a>
+
+            <a href="/dashboard"
+               class="nav-item {% if request.path == '/dashboard' %}active{% endif %}">
+                <i class="fa-solid fa-house"></i> Dashboard
+            </a>
+
+            <a href="/create-staff"
+               class="nav-item {% if request.path == '/create-staff' %}active{% endif %}">
+                <i class="fa-solid fa-user-plus"></i> Create Staff Account
+            </a>
+
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-list-ul"></i> Queue Management
+            </a>
+
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-desktop"></i> Counter Control
+            </a>
+
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-qrcode"></i> QR Scanner
+            </a>
+
         </div>
 
         <!-- USER CARD -->
@@ -40,6 +59,7 @@
             <div class="avatar">
                 {{ (session.get('user','U')[:1]).upper() }}
             </div>
+
             <div class="user-details">
                 <div>{{ session.get('user', 'Guest User') }}</div>
 
@@ -47,7 +67,6 @@
                     {{ office_name if office_name else "No Office Assigned" }}
                 </small>
 
-                <!-- ✅ OFFICE ID DISPLAY -->
                 <small style="opacity:0.7; font-size:12px;">
                     Office ID: {{ office_id if office_id else "N/A" }}
                 </small>
@@ -55,13 +74,15 @@
         </div>
     </aside>
 
-    <!-- MAIN -->
+    <!-- MAIN CONTENT -->
     <main class="main-container">
 
         <!-- HEADER -->
         <div class="header-card">
+
             <div class="header-left">
                 <h1 id="greeting-title">Loading...</h1>
+
                 <div class="meta-row">
                     <span class="date-text" id="current-date"></span>
                     <span class="live-time-pill" id="live-clock"></span>
@@ -69,6 +90,7 @@
             </div>
 
             <div class="header-right">
+
                 <div id="status-container">
                     <div id="status-btn" class="status-badge">
                         <span class="dot"></span>
@@ -79,9 +101,9 @@
                 <a href="/logout" class="logout-btn">
                     <i class="fa-solid fa-power-off"></i> Logout
                 </a>
+
             </div>
         </div>
-
 
     </main>
 
@@ -104,7 +126,7 @@
         </div>
     </div>
 
-    <!-- PASS DATA -->
+    <!-- PASS DATA TO JS -->
     <script>
         const OFFICE_NAME = "{{ office_name or '' }}";
         const OPEN_TIME = "{{ open_time or '' }}";
@@ -115,5 +137,4 @@
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 
 </body>
-
 </html>
