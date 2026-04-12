@@ -91,6 +91,93 @@
             </div>
         </div>
 
+        <div class="dashboard-extra">
+
+            <!-- Stats Cards -->
+            <div class="stats-container">
+        
+                <div class="card">
+                    <div class="card-top">
+                        <p>Tokens Today</p>
+                        <div class="icon red"><i class="fa-solid fa-ticket"></i></div>
+                    </div>
+                    <h2>{{tokens_today}}</h2>
+                </div>
+        
+                <div class="card">
+                    <div class="card-top">
+                        <p>Waiting</p>
+                        <div class="icon blue"><i class="fa-solid fa-users"></i></div>
+                    </div>
+                    <h2>{{waiting_count}}</h2>
+                </div>
+        
+                <div class="card">
+                    <div class="card-top">
+                        <p>Served</p>
+                        <div class="icon green"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                    <h2>{{served_count}}</h2>
+                </div>
+        
+                <div class="card">
+                    <div class="card-top">
+                        <p>Counters</p>
+                        <div class="icon purple"><i class="fa-solid fa-desktop"></i></div>
+                    </div>
+                    <h2>{{counters_count}}</h2>
+                </div>
+        
+            </div>
+        
+            <!-- Queue Section -->
+            <div class="queue-section">
+                <div class="queue-header">
+                    <div>
+                        <button class="tab active">
+                            All Queues ({{ queues|length if queues else 0 }})
+                        </button>
+                        <button class="tab">Active (0)</button>
+                        <button class="tab">Paused (0)</button>
+                    </div>
+                    <button class="create-btn">+ Create New Queue</button>
+                </div>
+        
+                {% if queues and queues|length > 0 %}
+                <table class="queue-table">
+                    <thead>
+                        <tr>
+                            <th>Queue Name</th>
+                            <th>Service</th>
+                            <th>Counters</th>
+                            <th>Daily Limit</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for q in queues %}
+                        <tr>
+                            <td>{{ q.name }}</td>
+                            <td>{{ q.service }}</td>
+                            <td>{{ q.counters }}</td>
+                            <td>{{ q.limit }}</td>
+                            <td>
+                                <span class="status {{ q.status }}">
+                                    {{ q.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No queues found.</p>
+                {% endif %}
+            </div>
+        
+        </div>
+
+
     </main>
 
     <!-- MODAL -->
