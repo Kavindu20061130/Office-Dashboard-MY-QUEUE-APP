@@ -27,21 +27,13 @@
             </div>
         </div>
 
-        <!-- NAVIGATION -->
         <div class="nav-group">
-
-            <a href="/dashboard"
-               class="nav-item {% if request.path == '/dashboard' %}active{% endif %}">
+            <a href="{{ url_for('dashboard.dashboard_home') }}" class="nav-item active">
                 <i class="fa-solid fa-house"></i> Dashboard
             </a>
 
-            <a href="/create-staff"
-               class="nav-item {% if request.path == '/create-staff' %}active{% endif %}">
+            <a href="{{ url_for('createcounterstaff.create_staff_page') }}" class="nav-item">
                 <i class="fa-solid fa-user-plus"></i> Create Staff Account
-            </a>
-
-            <a href="#" class="nav-item">
-                <i class="fa-solid fa-list-ul"></i> Queue Management
             </a>
 
             <a href="#" class="nav-item">
@@ -51,7 +43,6 @@
             <a href="#" class="nav-item">
                 <i class="fa-solid fa-qrcode"></i> QR Scanner
             </a>
-
         </div>
 
         <!-- USER CARD -->
@@ -59,7 +50,6 @@
             <div class="avatar">
                 {{ (session.get('user','U')[:1]).upper() }}
             </div>
-
             <div class="user-details">
                 <div>{{ session.get('user', 'Guest User') }}</div>
 
@@ -74,15 +64,13 @@
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN -->
     <main class="main-container">
 
         <!-- HEADER -->
         <div class="header-card">
-
             <div class="header-left">
                 <h1 id="greeting-title">Loading...</h1>
-
                 <div class="meta-row">
                     <span class="date-text" id="current-date"></span>
                     <span class="live-time-pill" id="live-clock"></span>
@@ -90,7 +78,6 @@
             </div>
 
             <div class="header-right">
-
                 <div id="status-container">
                     <div id="status-btn" class="status-badge">
                         <span class="dot"></span>
@@ -101,7 +88,6 @@
                 <a href="/logout" class="logout-btn">
                     <i class="fa-solid fa-power-off"></i> Logout
                 </a>
-
             </div>
         </div>
 
@@ -126,7 +112,7 @@
         </div>
     </div>
 
-    <!-- PASS DATA TO JS -->
+    <!-- PASS DATA -->
     <script>
         const OFFICE_NAME = "{{ office_name or '' }}";
         const OPEN_TIME = "{{ open_time or '' }}";
@@ -137,4 +123,5 @@
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 
 </body>
+
 </html>

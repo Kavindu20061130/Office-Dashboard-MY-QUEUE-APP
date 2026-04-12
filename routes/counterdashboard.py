@@ -89,9 +89,23 @@ def get_data():
         office_id = get_document_id_from_ref(office_ref)
         counter_doc = db.collection("COUNTERS").document(counter_id).get()
         office_doc = db.collection("OFFICES").document(office_id).get()
+        
+        # Check if queue exists for this counter
         queue_doc = next(db.collection("QUEUES").where("counterId", "==", counter_ref).limit(1).stream(), None)
+        
+        # If no queue assigned, return special status with message
         if not queue_doc:
-            return jsonify({"error": "Queue not found"}), 404
+            return jsonify({
+                "hasQueue": False,
+                "officeName": office_doc.to_dict().get("name", ""),
+                "counterName": counter_doc.to_dict().get("name", ""),
+                "queueName": None,
+                "tokens": [],
+                "message": "No queue has been assigned to this counter yet. Please contact your administrator.",
+                "lastUpdate": datetime.now().timestamp()
+            }), 200, response_headers
+        
+        # Queue exists - proceed normally
         queue_ref = queue_doc.reference
         queue_path = get_ref_path(queue_ref)
 
@@ -177,6 +191,7 @@ def get_data():
         tokens.sort(key=lambda x: x["position"])
         
         return jsonify({
+            "hasQueue": True,
             "officeName": office_doc.to_dict().get("name", ""),
             "counterName": counter_doc.to_dict().get("name", ""),
             "queueName": queue_doc.to_dict().get("name", ""),
