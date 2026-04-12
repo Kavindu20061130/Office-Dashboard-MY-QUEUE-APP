@@ -35,6 +35,13 @@
             <a href="{{ url_for('createcounterstaff.create_staff_page') }}" class="nav-item">
                 <i class="fa-solid fa-user-plus"></i> Create Staff Account
             </a>
+            <a href="{{ url_for('createqueue.create_queue_page') }}" class="nav-item">
+                <i class="fa-solid fa-plus-circle"></i> Create New Queue
+            </a>
+
+            <a href="#" class="nav-item">
+                <i class="fa-solid fa-list"></i> Queue Management
+            </a>
 
             <a href="#" class="nav-item">
                 <i class="fa-solid fa-desktop"></i> Counter Control
@@ -95,7 +102,7 @@
 
             <!-- Stats Cards -->
             <div class="stats-container">
-        
+
                 <div class="card">
                     <div class="card-top">
                         <p>Tokens Today</p>
@@ -103,7 +110,7 @@
                     </div>
                     <h2>{{tokens_today}}</h2>
                 </div>
-        
+
                 <div class="card">
                     <div class="card-top">
                         <p>Waiting</p>
@@ -111,7 +118,7 @@
                     </div>
                     <h2>{{waiting_count}}</h2>
                 </div>
-        
+
                 <div class="card">
                     <div class="card-top">
                         <p>Served</p>
@@ -119,7 +126,7 @@
                     </div>
                     <h2>{{served_count}}</h2>
                 </div>
-        
+
                 <div class="card">
                     <div class="card-top">
                         <p>Counters</p>
@@ -127,9 +134,9 @@
                     </div>
                     <h2>{{counters_count}}</h2>
                 </div>
-        
+
             </div>
-        
+
             <!-- Queue Section -->
             <div class="queue-section">
                 <div class="queue-header">
@@ -142,7 +149,7 @@
                     </div>
                     <button class="create-btn">+ Create New Queue</button>
                 </div>
-        
+
                 {% if queues and queues|length > 0 %}
                 <table class="queue-table">
                     <thead>
@@ -174,7 +181,7 @@
                 <p>No queues found.</p>
                 {% endif %}
             </div>
-        
+
         </div>
 
 
