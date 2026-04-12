@@ -89,24 +89,84 @@ async function loadData(showLoadingIndicator = false) {
 
         // Update info cards
         const officeName = data.officeName || "N/A";
-        const queueName  = data.queueName  || "N/A";
-        const counterName= data.counterName || "N/A";
-
-        document.getElementById("office").textContent  = officeName;
-        document.getElementById("queue").textContent   = queueName;
+        const counterName = data.counterName || "N/A";
+        
+        document.getElementById("office").textContent = officeName;
         document.getElementById("counter").textContent = counterName;
-
+        
         // Update sidebar
         const sideOfficeName = document.getElementById("sidebar-office-name");
         if (sideOfficeName) sideOfficeName.textContent = officeName;
 
+        // Check if queue exists
+        if (!data.hasQueue || !data.queueName) {
+            // No queue assigned - show admin message
+            const queueElement = document.getElementById("queue");
+            queueElement.textContent = "⚠️ No Queue Assigned";
+            queueElement.style.color = "#f59e0b";
+            queueElement.style.fontWeight = "600";
+            
+            // Update serving banner
+            const servingQueueEl = document.getElementById("servingQueue");
+            if (servingQueueEl) servingQueueEl.textContent = "NO QUEUE ASSIGNED";
+            
+            // Show message in serving card
+            document.getElementById("servingToken").textContent = "!--";
+            document.getElementById("servingName").innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> No Queue Assigned';
+            document.getElementById("servingMeta").innerHTML = 'Please contact your administrator to assign a queue to this counter';
+            
+            // Disable all action buttons
+            document.getElementById("completeBtn").disabled = true;
+            document.getElementById("skipBtn").disabled = true;
+            document.getElementById("cancelBtn").disabled = true;
+            
+            // Show message in table
+            const tbody = document.getElementById("tableBody");
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align:center; padding: 60px 20px;">
+                        <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 12px; padding: 40px; max-width: 500px; margin: 0 auto;">
+                            <i class="fa-solid fa-building-user" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px; display: inline-block;"></i>
+                            <h3 style="color: #92400e; margin-bottom: 12px;">No Queue Assigned</h3>
+                            <p style="color: #78350f; margin-bottom: 8px;">${data.message || "This counter doesn't have a queue assigned yet."}</p>
+                            <p style="color: #78350f; font-size: 14px; margin-top: 16px;">
+                                <i class="fa-solid fa-user-tie"></i> Please check with your administrator
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            const now = new Date();
+            document.getElementById("lastUpdateTime").textContent = now.toLocaleTimeString();
+            lastUpdateTimestamp = now.getTime();
+            return;
+        }
+        
+        // Queue exists - normal flow
+        const queueElement = document.getElementById("queue");
+        queueElement.textContent = data.queueName;
+        queueElement.style.color = ""; // Reset color
+        queueElement.style.fontWeight = "";
+        
         // Update serving banner queue label
         const servingQueueEl = document.getElementById("servingQueue");
-        if (servingQueueEl) servingQueueEl.textContent = queueName.toUpperCase();
-
+        if (servingQueueEl) servingQueueEl.textContent = data.queueName.toUpperCase();
+        
         const tokens = data.tokens || [];
         renderTable(tokens);
         renderServingCard(tokens);
+        
+        // Enable buttons if tokens exist
+        if (tokens.length > 0) {
+            document.getElementById("completeBtn").disabled = false;
+            document.getElementById("skipBtn").disabled = false;
+            document.getElementById("cancelBtn").disabled = false;
+        } else {
+            document.getElementById("completeBtn").disabled = true;
+            document.getElementById("skipBtn").disabled = true;
+            document.getElementById("cancelBtn").disabled = true;
+        }
 
         const now = new Date();
         document.getElementById("lastUpdateTime").textContent = now.toLocaleTimeString();
@@ -138,7 +198,7 @@ function renderServingCard(tokens) {
     if (!serving) {
         tokenBadge.textContent = "--";
         servingName.textContent = "No token currently serving";
-        servingMeta.textContent = "";
+        servingMeta.textContent = "Waiting for customers...";
         currentServingId = null;
         completeBtn.disabled = true;
         skipBtn.disabled = true;

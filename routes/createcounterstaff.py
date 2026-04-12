@@ -6,7 +6,7 @@ from google.cloud import firestore
 
 createcounterstaff = Blueprint("createcounterstaff", __name__)
 
-# ----- ID generators (counter_X, session_X) -----
+# ---------- ID generators ----------
 def get_next_counter_id():
     counter_ref = db.collection("METADATA").document("counter_counter")
     transaction = db.transaction()
@@ -45,14 +45,14 @@ def get_next_session_id():
         print(f"Session ID generation failed: {e}")
         return db.collection("COUNTER_SESSIONS").document().id
 
-# ----- Helper to get current queue for a counter -----
+# ---------- Helper ----------
 def get_queue_for_counter(counter_ref):
     queues = db.collection("QUEUES").where("counterId", "==", counter_ref).limit(1).stream()
     for q in queues:
         return q.id
     return None
 
-# ----- Page: render admin form -----
+# ---------- RENDER PAGE ----------
 @createcounterstaff.route("/create-staff")
 def create_staff_page():
     if "user" not in session or session.get("role") != "admin":
@@ -84,12 +84,12 @@ def create_staff_page():
         data = doc.to_dict()
         queues.append({"id": doc.id, "name": data.get("name"), "status": data.get("status")})
 
-    return render_template("createcounterstaff.html",
+    return render_template("createcounter.html",
                            counters=counters,
                            staff=staff,
                            queues=queues)
 
-# ----- Check username uniqueness (global) -----
+# ---------- CHECK USERNAME UNIQUENESS ----------
 @createcounterstaff.route("/check-username", methods=["GET"])
 def check_username():
     if "user" not in session or session.get("role") != "admin":
@@ -100,7 +100,7 @@ def check_username():
     existing = db.collection("COUNTER_SESSIONS").where("Username", "==", username).limit(1).stream()
     return jsonify({"available": not any(existing), "username": username})
 
-# ----- CREATE staff (with optional queue assignment) -----
+# ---------- CREATE STAFF ----------
 @createcounterstaff.route("/create-staff", methods=["POST"])
 def create_staff():
     office_id = session.get("office_id")
@@ -109,7 +109,6 @@ def create_staff():
     confirm = request.form.get("confirm_password", "")
     queue_id = request.form.get("queue_id")  # may be empty string
 
-    # validations
     if not username or len(username) < 8:
         return jsonify({"error": "Username must be at least 8 characters"}), 400
     if not password or not confirm:
@@ -119,14 +118,12 @@ def create_staff():
     if len(password) < 8 or len(password) > 18 or not re.search(r"\d", password):
         return jsonify({"error": "Password must be 8-18 characters and contain at least one digit"}), 400
 
-    # unique username globally
     existing_user = db.collection("COUNTER_SESSIONS").where("Username", "==", username).limit(1).stream()
     if any(existing_user):
         return jsonify({"error": "Username already taken (global unique)"}), 400
 
     office_ref = db.collection("OFFICES").document(office_id)
 
-    # Determine counter: either existing_counter_id or create new
     existing_counter_id = request.form.get("existing_counter_id")
     new_counter_name = request.form.get("counter_name", "").strip()
 
@@ -146,7 +143,6 @@ def create_staff():
     else:
         return jsonify({"error": "Either select existing counter or provide new counter name"}), 400
 
-    # create staff session
     session_id = get_next_session_id()
     db.collection("COUNTER_SESSIONS").document(session_id).set({
         "Username": username,
@@ -157,29 +153,26 @@ def create_staff():
         "createdAt": datetime.now()
     })
 
-    # assign to queue ONLY if a valid queue_id is provided (not empty)
     if queue_id and queue_id.strip():
         queue_ref = db.collection("QUEUES").document(queue_id)
         queue_snapshot = queue_ref.get()
         if queue_snapshot.exists and queue_snapshot.to_dict().get("officeId") == office_ref:
-            # Remove counter from any previous queue (safety, though new staff has no previous)
             old_queues = db.collection("QUEUES").where("counterId", "==", counter_ref).stream()
             for q in old_queues:
                 q.reference.update({"counterId": None})
-            # Assign to new queue
             queue_ref.update({"counterId": counter_ref})
         else:
             return jsonify({"error": "Invalid queue selected"}), 400
 
     return jsonify({"success": f"Staff '{username}' created with counter {counter_ref.id}"})
 
-# ----- UPDATE staff (status, password, counter assignment, optional queue assignment/unassignment) -----
+# ---------- UPDATE STAFF ----------
 @createcounterstaff.route("/update-staff/<doc_id>", methods=["POST"])
 def update_staff(doc_id):
     password = request.form.get("password")
     confirm = request.form.get("confirm_password")
     status = request.form.get("status")
-    queue_id = request.form.get("queue_id")  # may be empty string
+    queue_id = request.form.get("queue_id")
     existing_counter_id = request.form.get("existing_counter_id")
     new_counter_name = request.form.get("new_counter_name", "").strip()
 
@@ -199,7 +192,6 @@ def update_staff(doc_id):
         return jsonify({"error": "Staff not found"}), 404
     old_counter_ref = staff_doc.to_dict().get("counterId")
 
-    # handle counter assignment (either existing or new)
     if existing_counter_id:
         counter_ref = db.collection("COUNTERS").document(existing_counter_id)
         counter_doc = counter_ref.get()
@@ -217,16 +209,13 @@ def update_staff(doc_id):
         })
         update_data["counterId"] = new_counter_ref
     else:
-        new_counter_ref = old_counter_ref   # keep old
+        new_counter_ref = old_counter_ref
 
-    # --- Handle queue assignment / unassignment ---
-    # First, remove counter from any queue it is currently assigned to (old assignment)
     if old_counter_ref:
         old_queues = db.collection("QUEUES").where("counterId", "==", old_counter_ref).stream()
         for q in old_queues:
             q.reference.update({"counterId": None})
 
-    # Now, if a queue_id is provided (non-empty), assign the (possibly new) counter to that queue
     if queue_id and queue_id.strip():
         queue_ref = db.collection("QUEUES").document(queue_id)
         queue_snapshot = queue_ref.get()
@@ -234,13 +223,12 @@ def update_staff(doc_id):
             queue_ref.update({"counterId": new_counter_ref})
         else:
             return jsonify({"error": "Invalid queue selected"}), 400
-    # If queue_id is empty, the counter remains unassigned (already cleared above)
 
     if update_data:
         db.collection("COUNTER_SESSIONS").document(doc_id).update(update_data)
     return jsonify({"success": "Staff updated successfully"})
 
-# ----- DELETE staff (also unassigns from any queue) -----
+# ---------- DELETE STAFF ----------
 @createcounterstaff.route("/delete-staff/<doc_id>", methods=["POST"])
 def delete_staff(doc_id):
     staff_doc = db.collection("COUNTER_SESSIONS").document(doc_id).get()
@@ -253,7 +241,7 @@ def delete_staff(doc_id):
     db.collection("COUNTER_SESSIONS").document(doc_id).delete()
     return jsonify({"success": "Staff deleted successfully"})
 
-# ----- Rename counter (separate utility) -----
+# ---------- RENAME COUNTER ----------
 @createcounterstaff.route("/update-counter/<counter_id>", methods=["POST"])
 def update_counter(counter_id):
     name = request.form.get("name", "").strip()
