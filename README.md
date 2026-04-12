@@ -10,81 +10,10 @@ The system includes a mobile application for users and a web-based dashboard for
 
 # How to Run the Project 🚀
 
-You can run this project using any of the following methods.
+You can run this project using any of the following methods in how to run.md.
 
 ---
 
-## Method 1 – Using Terminal 💻
-
-Step 1 - Go to project folder (after extracting ZIP)
-cd path\to\your\project
-
-Step 2 - Create virtual environment
-python -m venv .venv
-
-Step 3 - Activate virtual environment
-.venv\Scripts\activate
-
-Step 4 - Install required packages
-pip install -r requirements.txt
-
-Step 5 - Run the application
-python app.py
-
-Open in browser:
-http://127.0.0.1:5000
-
----
-
-## Method 2 – Using VS Code Terminal 🧑‍💻
-
-Step 1 - Open VS Code  
-Click File → Open Folder → Select project folder  
-
-Step 2 - Open terminal  
-Click Terminal → New Terminal  
-
-Step 3 - Create virtual environment  
-python -m venv .venv  
-
-Step 4 - Activate virtual environment  
-.venv\Scripts\activate  
-
-Step 5 - Install dependencies  
-pip install -r requirements.txt  
-
-Step 6 - Run the application  
-python app.py  
-
-Open in browser:  
-http://127.0.0.1:5000  
-
----
-
-## Method 3 – VS Code Easy Setup ⚡
-
-Step 1 - Open project in VS Code  
-
-Step 2 - Create virtual environment  
-Click "Select Interpreter" (top right)  
-Click "Create Virtual Environment"  
-Choose "Venv"  
-Select Python version  
-
-Step 3 - Open terminal  
-Click Terminal → New Terminal  
-(Venv will activate automatically)  
-
-Step 4 - Install dependencies  
-pip install -r requirements.txt  
-
-Step 5 - Run the application  
-python app.py  
-
-Open in browser:  
-http://127.0.0.1:5000  
-
----
 
 ## Admin Dashboard (Office Management) 🏢
 
@@ -179,3 +108,7 @@ The Counter Dashboard is used by officers at service counters to handle customer
 ---
 
 This system aims to create a faster, more organized, and transparent service experience for both citizens and government institutions.
+
+Run
+
+python app.py
