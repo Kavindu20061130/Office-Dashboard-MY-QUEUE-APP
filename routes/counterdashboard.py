@@ -97,6 +97,7 @@ def get_data():
         if not queue_doc:
             return jsonify({
                 "hasQueue": False,
+                "queueInactive": True,
                 "officeName": office_doc.to_dict().get("name", ""),
                 "counterName": counter_doc.to_dict().get("name", ""),
                 "queueName": None,
@@ -105,7 +106,25 @@ def get_data():
                 "lastUpdate": datetime.now().timestamp()
             }), 200, response_headers
         
-        # Queue exists - proceed normally
+        # Check if queue is active/inactive
+        queue_data = queue_doc.to_dict()
+        queue_status = queue_data.get("status", "inactive")  # Default to inactive if status not set
+        queue_name = queue_data.get("name", "")
+        
+        # If queue status is inactive, don't display any data
+        if queue_status.lower() == "inactive":
+            return jsonify({
+                "hasQueue": True,
+                "queueInactive": True,
+                "officeName": office_doc.to_dict().get("name", ""),
+                "counterName": counter_doc.to_dict().get("name", ""),
+                "queueName": queue_name,
+                "tokens": [],
+                "message": "This queue is currently inactive. Tokens cannot be served at this time.",
+                "lastUpdate": datetime.now().timestamp()
+            }), 200, response_headers
+        
+        # Queue exists and is active - proceed normally
         queue_ref = queue_doc.reference
         queue_path = get_ref_path(queue_ref)
 
@@ -192,9 +211,10 @@ def get_data():
         
         return jsonify({
             "hasQueue": True,
+            "queueInactive": False,
             "officeName": office_doc.to_dict().get("name", ""),
             "counterName": counter_doc.to_dict().get("name", ""),
-            "queueName": queue_doc.to_dict().get("name", ""),
+            "queueName": queue_name,
             "tokens": tokens,
             "lastUpdate": datetime.now().timestamp()
         }), 200, response_headers
@@ -207,7 +227,25 @@ def get_data():
 # ---------------------------
 @counterdashboard.route("/counterdashboard/api/serve/<token_id>", methods=["POST"])
 def serve_token(token_id):
+    # Check if queue is active before allowing serve action
     try:
+        # Get the token's queue info
+        token_doc = db.collection("TOKENS").document(token_id).get()
+        if not token_doc.exists:
+            return jsonify({"error": "Token not found"}), 404
+        
+        token_data = token_doc.to_dict()
+        queue_ref = token_data.get("queueId")
+        
+        if queue_ref:
+            # Get queue document to check status
+            queue_id = get_document_id_from_ref(queue_ref)
+            queue_doc = db.collection("QUEUES").document(queue_id).get()
+            if queue_doc.exists:
+                queue_status = queue_doc.to_dict().get("status", "inactive")
+                if queue_status.lower() == "inactive":
+                    return jsonify({"error": "Cannot serve token: Queue is inactive"}), 403
+        
         db.collection("TOKENS").document(token_id).update({
             "status": "served",
             "servedtime": SERVER_TIMESTAMP
@@ -218,7 +256,25 @@ def serve_token(token_id):
 
 @counterdashboard.route("/counterdashboard/api/skip/<token_id>", methods=["POST"])
 def skip_token(token_id):
+    # Check if queue is active before allowing skip action
     try:
+        # Get the token's queue info
+        token_doc = db.collection("TOKENS").document(token_id).get()
+        if not token_doc.exists:
+            return jsonify({"error": "Token not found"}), 404
+        
+        token_data = token_doc.to_dict()
+        queue_ref = token_data.get("queueId")
+        
+        if queue_ref:
+            # Get queue document to check status
+            queue_id = get_document_id_from_ref(queue_ref)
+            queue_doc = db.collection("QUEUES").document(queue_id).get()
+            if queue_doc.exists:
+                queue_status = queue_doc.to_dict().get("status", "inactive")
+                if queue_status.lower() == "inactive":
+                    return jsonify({"error": "Cannot skip token: Queue is inactive"}), 403
+        
         db.collection("TOKENS").document(token_id).update({"status": "skipped"})
         return jsonify({"success": True})
     except Exception as e:
@@ -227,7 +283,25 @@ def skip_token(token_id):
 @counterdashboard.route("/counterdashboard/api/arrive/<token_id>", methods=["POST"])
 def set_arrived_time(token_id):
     """Set a custom arrival time (Unix timestamp in seconds)"""
+    # Check if queue is active before allowing arrive action
     try:
+        # Get the token's queue info
+        token_doc = db.collection("TOKENS").document(token_id).get()
+        if not token_doc.exists:
+            return jsonify({"error": "Token not found"}), 404
+        
+        token_data = token_doc.to_dict()
+        queue_ref = token_data.get("queueId")
+        
+        if queue_ref:
+            # Get queue document to check status
+            queue_id = get_document_id_from_ref(queue_ref)
+            queue_doc = db.collection("QUEUES").document(queue_id).get()
+            if queue_doc.exists:
+                queue_status = queue_doc.to_dict().get("status", "inactive")
+                if queue_status.lower() == "inactive":
+                    return jsonify({"error": "Cannot set arrival time: Queue is inactive"}), 403
+        
         data = request.get_json()
         if not data or "arrivedtime" not in data:
             return jsonify({"error": "Missing arrivedtime"}), 400
