@@ -1,218 +1,151 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QueueLK | Dashboard</title>
+{% block title %}Dashboard | QueueLK{% endblock %}
 
-    <!-- Fonts & Icons -->
-    <link rel="icon" type="image/png" href="/static/images/withbackground.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
-</head>
+{% block content %}
 
-<body>
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div class="logo-section">
-            <img src="{{ url_for('static', filename='images/logo3.png') }}" alt="Logo">
-            <div class="brand-name">
-                <h2>QueueLK</h2>
-                <p>{{ office_name if office_name else "Department System" }}</p>
-            </div>
-        </div>
-
-        <div class="nav-group">
-            <a href="{{ url_for('dashboard.dashboard_home') }}" class="nav-item active">
-                <i class="fa-solid fa-house"></i> Dashboard
-            </a>
-
-            <a href="{{ url_for('createcounterstaff.create_staff_page') }}" class="nav-item">
-                <i class="fa-solid fa-user-plus"></i> Create Staff Account
-            </a>
-            <a href="{{ url_for('createqueue.create_queue_page') }}" class="nav-item">
-                <i class="fa-solid fa-plus-circle"></i> Create New Queue
-            </a>
-
-            <a href="#" class="nav-item">
-                <i class="fa-solid fa-list"></i> Queue Management
-            </a>
-
-            <a href="#" class="nav-item">
-                <i class="fa-solid fa-desktop"></i> Counter Control
-            </a>
-
-            <a href="#" class="nav-item">
-                <i class="fa-solid fa-qrcode"></i> QR Scanner
-            </a>
-        </div>
-
-        <!-- USER CARD -->
-        <div class="user-card">
-            <div class="avatar">
-                {{ (session.get('user','U')[:1]).upper() }}
-            </div>
-            <div class="user-details">
-                <div>{{ session.get('user', 'Guest User') }}</div>
-
-                <small>
-                    {{ office_name if office_name else "No Office Assigned" }}
-                </small>
-
-                <small style="opacity:0.7; font-size:12px;">
-                    Office ID: {{ office_id if office_id else "N/A" }}
-                </small>
-            </div>
-        </div>
-    </aside>
-
-    <!-- MAIN -->
-    <main class="main-container">
-
-        <!-- HEADER -->
-        <div class="header-card">
-            <div class="header-left">
-                <h1 id="greeting-title">Loading...</h1>
-                <div class="meta-row">
-                    <span class="date-text" id="current-date"></span>
-                    <span class="live-time-pill" id="live-clock"></span>
-                </div>
-            </div>
-
-            <div class="header-right">
-                <div id="status-container">
-                    <div id="status-btn" class="status-badge">
-                        <span class="dot"></span>
-                        <span id="status-text">Loading...</span>
-                    </div>
-                </div>
-
-                <a href="/logout" class="logout-btn">
-                    <i class="fa-solid fa-power-off"></i> Logout
-                </a>
-            </div>
-        </div>
-
-        <div class="dashboard-extra">
-
-            <!-- Stats Cards -->
-            <div class="stats-container">
-                <div class="card">
-                    <div class="card-top">
-                        <p>Tokens Today</p>
-                        <div class="icon red"><i class="fa-solid fa-ticket"></i></div>
-                    </div>
-                    <h2>{{tokens_today}}</h2>
-                </div>
-
-                <div class="card">
-                    <div class="card-top">
-                        <p>Waiting</p>
-                        <div class="icon blue"><i class="fa-solid fa-users"></i></div>
-                    </div>
-                    <h2>{{waiting_count}}</h2>
-                </div>
-
-                <div class="card">
-                    <div class="card-top">
-                        <p>Served</p>
-                        <div class="icon green"><i class="fa-solid fa-check"></i></div>
-                    </div>
-                    <h2>{{served_count}}</h2>
-                </div>
-
-                <div class="card">
-                    <div class="card-top">
-                        <p>Counters</p>
-                        <div class="icon purple"><i class="fa-solid fa-desktop"></i></div>
-                    </div>
-                    <h2>{{counters_count}}</h2>
-                </div>
-            </div>
-
-            <!-- Queue Section -->
-            <div class="queue-section">
-                <div class="queue-header">
-                    <div>
-                        <button class="tab active">
-                            All Queues ({{ queues|length if queues else 0 }})
-                        </button>
-                        <button class="tab">Active (0)</button>
-                        <button class="tab">Paused (0)</button>
-                    </div>
-                    <button class="create-btn">+ Create New Queue</button>
-                </div>
-
-                {% if queues and queues|length > 0 %}
-                <table class="queue-table">
-                    <thead>
-                        <tr>
-                            <th>Queue Name</th>
-                            <th>Service</th>
-                            <th>Counters</th>
-                            <th>Daily Limit</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for q in queues %}
-                        <tr>
-                            <td>{{ q.name }}</td>
-                            <td>{{ q.service }}</td>
-                            <td>{{ q.counters }}</td>
-                            <td>{{ q.limit }}</td>
-                            <td>
-                                <span class="status {{ q.status }}">
-                                    {{ q.status }}
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <p>No queues found.</p>
-                {% endif %}
-            </div>
-
-        </div>
-
-    </main>
-
-    <!-- MODAL -->
-    <div id="office-modal" class="modal-overlay">
-        <div class="modal-box">
-            <h2>Office Hours</h2>
-
-            <div class="time-row">
-                <span>Opening Time:</span>
-                <strong id="modal-open-time"></strong>
-            </div>
-
-            <div class="time-row">
-                <span>Closing Time:</span>
-                <strong id="modal-close-time"></strong>
-            </div>
-
-            <button id="close-modal" class="close-btn">Close</button>
+<!-- HEADER -->
+<div class="header-card">
+    <div class="header-left">
+        <h1 id="greeting-title">Loading...</h1>
+        <div class="meta-row">
+            <span class="date-text" id="current-date"></span>
+            <span class="live-time-pill" id="live-clock"></span>
         </div>
     </div>
 
-    <!-- PASS DATA -->
-    <script>
-        const OFFICE_NAME = "{{ office_name or '' }}";
-        const OPEN_TIME = "{{ open_time or '' }}";
-        const CLOSE_TIME = "{{ close_time or '' }}";
-    </script>
+    <div class="header-right">
+        <div id="status-container">
+            <div id="status-btn" class="status-badge">
+                <span class="dot"></span>
+                <span id="status-text">Loading...</span>
+            </div>
+        </div>
 
-    <!-- JS -->
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+        <a href="/logout" class="logout-btn">
+            <i class="fa-solid fa-power-off"></i> Logout
+        </a>
+    </div>
+</div>
 
-</body>
+<div class="dashboard-extra">
 
-</html>
+    <!-- Stats Cards -->
+    <div class="stats-container">
+
+        <div class="card">
+            <div class="card-top">
+                <p>Tokens Today</p>
+                <div class="icon red"><i class="fa-solid fa-ticket"></i></div>
+            </div>
+            <h2>{{ tokens_today }}</h2>
+        </div>
+
+        <div class="card">
+            <div class="card-top">
+                <p>Waiting</p>
+                <div class="icon blue"><i class="fa-solid fa-users"></i></div>
+            </div>
+            <h2>{{ waiting_count }}</h2>
+        </div>
+
+        <div class="card">
+            <div class="card-top">
+                <p>Served</p>
+                <div class="icon green"><i class="fa-solid fa-check"></i></div>
+            </div>
+            <h2>{{ served_count }}</h2>
+        </div>
+
+        <div class="card">
+            <div class="card-top">
+                <p>Counters</p>
+                <div class="icon purple"><i class="fa-solid fa-desktop"></i></div>
+            </div>
+            <h2>{{ counters_count }}</h2>
+        </div>
+
+    </div>
+
+    <!-- Queue Section -->
+    <div class="queue-section">
+        <div class="queue-header">
+            <div>
+                <button class="tab active">
+                    All Queues ({{ queues|length if queues else 0 }})
+                </button>
+                <button class="tab">Active (0)</button>
+                <button class="tab">Paused (0)</button>
+            </div>
+
+            <a href="{{ url_for('createqueue.create_queue_page') }}" class="create-btn">
+                <i class="fa-solid fa-plus"></i> Create New Queue
+            </a>
+        </div>
+
+        {% if queues and queues|length > 0 %}
+        <table class="queue-table">
+            <thead>
+                <tr>
+                    <th>Queue Name</th>
+                    <th>Service</th>
+                    <th>Counters</th>
+                    <th>Daily Limit</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in queues %}
+                <tr>
+                    <td>{{ q.name }}</td>
+                    <td>{{ q.service }}</td>
+                    <td>{{ q.counters }}</td>
+                    <td>{{ q.limit }}</td>
+                    <td>
+                        <span class="status {{ q.status }}">
+                            {{ q.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-layer-group"></i>
+            <p>No queues found. Create your first queue to get started.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- MODAL -->
+<div id="office-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h2>Office Hours</h2>
+        <div class="time-row">
+            <span>Opening Time:</span>
+            <strong id="modal-open-time"></strong>
+        </div>
+        <div class="time-row">
+            <span>Closing Time:</span>
+            <strong id="modal-close-time"></strong>
+        </div>
+        <button id="close-modal" class="close-btn">Close</button>
+    </div>
+</div>
+
+<script>
+    const OFFICE_NAME = "{{ office_name or '' }}";
+    const OPEN_TIME = "{{ open_time or '' }}";
+    const CLOSE_TIME = "{{ close_time or '' }}";
+</script>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+{% endblock %}

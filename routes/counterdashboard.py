@@ -6,9 +6,8 @@ import pytz
 
 counterdashboard = Blueprint("counterdashboard", __name__)
 
-# ---------------------------
-# Helpers
-# ---------------------------
+
+
 def get_document_id_from_ref(ref):
     if isinstance(ref, DocumentReference):
         return ref.id
@@ -21,9 +20,6 @@ def get_ref_path(ref):
         return ref.path
     return str(ref).lstrip('/')
 
-# ---------------------------
-# Main page
-# ---------------------------
 @counterdashboard.route("/counterdashboard")
 def counter_dashboard_home():
     if not session.get("user_id") or session.get("role") != "counter":

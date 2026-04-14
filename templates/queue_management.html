@@ -1,0 +1,299 @@
+<!-- templates/queue_management.html -->
+{% extends "base.html" %}
+
+{% block title %}Queue Management | QueueLK{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/queue_management.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div class="header-left">
+        <div class="breadcrumb">
+            <a href="{{ url_for('dashboard.dashboard_home') }}">Dashboard</a>
+            <i class="fa-solid fa-chevron-right"></i>
+            <span class="crumb-active">Queue Management</span>
+        </div>
+        <h1>Queue Management</h1>
+        <p>Administer office queues, tokens, and counter assignments</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('createqueue.create_queue_page') }}" class="btn-add-queue">
+            <i class="fa-solid fa-plus"></i> Add New Queue
+        </a>
+    </div>
+</div>
+
+<!-- STATS ROW -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon red"><i class="fa-solid fa-layer-group"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">Total Queues</span>
+            <span class="stat-value">{{ queues|length if queues else 0 }}</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">Active</span>
+            <span class="stat-value">{{ queues|selectattr('status','equalto','active')|list|length if queues else 0 }}</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon amber"><i class="fa-solid fa-pause"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">Inactive</span>
+            <span class="stat-value">{{ queues|selectattr('status','equalto','inactive')|list|length if queues else 0 }}</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fa-solid fa-ticket"></i></div>
+        <div class="stat-info">
+            <span class="stat-label">Total Tokens</span>
+            <span class="stat-value">{{ queues|sum(attribute='booked') if queues else 0 }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+    <div class="filter-tabs">
+        <button class="ftab active" onclick="filterTable('all', this)">
+            All Queues <span class="tab-count">{{ queues|length if queues else 0 }}</span>
+        </button>
+        <button class="ftab" onclick="filterTable('active', this)">
+            Active <span class="tab-count">{{ queues|selectattr('status','equalto','active')|list|length if queues else 0 }}</span>
+        </button>
+        <button class="ftab" onclick="filterTable('inactive', this)">
+            Inactive <span class="tab-count">{{ queues|selectattr('status','equalto','inactive')|list|length if queues else 0 }}</span>
+        </button>
+    </div>
+
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" placeholder="Search queues..." id="searchInput" oninput="searchTable()" />
+        </div>
+        <button class="ftab" onclick="refreshQueueData()" style="background: var(--primary-green); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer;">
+            <i class="fa-solid fa-rotate"></i> Refresh
+        </button>
+    </div>
+</div>
+
+<!-- TABLE CARD -->
+<div class="table-card">
+    <div class="table-scroll">
+        <table class="queue-table" id="queueTable">
+            <thead>
+                <tr>
+                    <th>Queue Name</th>
+                    <th>Type</th>
+                    <th>Daily Limit</th>
+                    <th>Assigned Counter</th>
+                    <th>Booked</th>
+                    <th>Active Tokens</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in queues %}
+                <tr id="row_{{q.id}}" data-status="{{ q.status }}" data-name="{{ q.name|lower }}">
+                    <td>
+                        <div class="queue-name-cell">
+                            <span class="queue-name">{{ q.name }}</span>
+                            <span class="queue-id">#{{ q.id }}</span>
+                        </div>
+                    </div>
+                    <td><span class="type-badge {{ q.type }}">{{ q.type|capitalize }}</span></div>
+                    <td>
+                        <span class="limit-num">{{ q.max }}</span>
+                        <span class="limit-sub">per day</span>
+                    </div>
+                    <td>
+                        {% set cname = counters|selectattr('id','equalto',q.counter)|map(attribute='name')|first|default('') %}
+                        {% if cname %}
+                        <span class="counter-pill"><i class="fa-solid fa-desktop"></i> {{ cname }}</span>
+                        {% else %}
+                        <span class="counter-none">—</span>
+                        {% endif %}
+                    </div>
+                    <td><span class="booked-val" id="booked_{{q.id}}">{{ q.booked }}</span></div>
+                    <td>
+                        {% if q.tokens|length > 0 %}
+                        <button class="view-tokens-btn" onclick="openTokenModal('{{q.id}}')">
+                            <i class="fa-solid fa-ticket"></i>
+                            {{ q.tokens|length }} token{{ 's' if q.tokens|length != 1 else '' }}
+                        </button>
+                        {% else %}
+                        <span class="no-tokens">No active tokens</span>
+                        {% endif %}
+                    </div>
+                    <td>
+                        <span class="status-badge {{ q.status }}">
+                            <span class="sdot"></span>{{ q.status|capitalize }}
+                        </span>
+                    </div>
+                    <td>
+                        <div class="tbl-actions">
+                            <button class="icon-btn edit" title="Edit" onclick="openEditModal('{{q.id}}')">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="icon-btn del" title="Delete" onclick="deleteQueue(this)"
+                                data-id="{{q.id}}" data-booked="{{q.booked}}">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </tr>
+                {% endfor %}
+
+                {% if not queues or queues|length == 0 %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="fa-solid fa-layer-group"></i>
+                            <p>No queues found. Create your first queue to get started.</p>
+                        </div>
+                    </div>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    <div class="table-footer">
+        <span class="footer-text">Showing <span id="showing-count">{{ queues|length if queues else 0 }}</span> queues</span>
+        <span class="live-pill"><i class="fa-solid fa-rotate"></i> Live</span>
+    </div>
+</div>
+
+<!-- ===== EDIT MODAL ===== -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+        <div class="modal-hdr">
+            <h3>Edit Queue</h3>
+            <button class="modal-close" onclick="closeEditModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="edit-id" />
+
+            <div class="form-group">
+                <label>Queue Name</label>
+                <input type="text" class="form-input" id="edit-name" placeholder="Queue name" />
+            </div>
+            
+            <div class="form-row-2">
+                <div class="form-group">
+                    <label>Queue Type</label>
+                    <select class="form-input" id="edit-type">
+                        <option value="short">Short</option>
+                        <option value="medium">Medium</option>
+                        <option value="long">Long</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Daily Limit</label>
+                    <div class="stepper-wrap">
+                        <button type="button" class="step-btn" onclick="changeEditMax(-1)">−</button>
+                        <span class="step-val" id="edit-max">50</span>
+                        <button type="button" class="step-btn" onclick="changeEditMax(1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Assigned Counter</label>
+                <select class="form-input" id="edit-counter">
+                    <option value="">— None —</option>
+                    {% for c in counters %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <div class="toggle-row">
+                    <span class="tgl-lbl">Inactive</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="edit-status-check" checked />
+                        <span class="toggle-track">
+                            <span class="toggle-thumb">
+                                <i class="fa-solid fa-check on-icon"></i>
+                                <i class="fa-solid fa-xmark off-icon"></i>
+                            </span>
+                        </span>
+                    </label>
+                    <span class="tgl-lbl">Active</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-ftr">
+            <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+            <button class="btn-save-modal" onclick="saveQueueModal()">
+                <i class="fa-solid fa-floppy-disk"></i> Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== DELETE MODAL ===== -->
+<div id="deleteModal" class="modal-overlay">
+    <div class="modal-box modal-sm">
+        <div class="danger-icon-wrap">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 class="danger-title">Queue has bookings</h3>
+        <p class="danger-desc">Users have already booked tokens for this queue. Force deleting will cancel all active appointments.</p>
+        <div class="modal-ftr center">
+            <button class="btn-cancel" onclick="closeModal()">Back</button>
+            <button class="btn-force-del" onclick="forceDelete()">
+                <i class="fa-solid fa-trash"></i> Force Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TOKEN VIEW MODAL ===== -->
+<div class="modal-overlay" id="tokenModal">
+    <div class="modal-box">
+        <div class="modal-hdr">
+            <h3>Active Tokens</h3>
+            <button class="modal-close" onclick="closeTokenModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="tokenModalBody">
+            <p style="text-align:center; color:var(--text-muted);">Loading tokens...</p>
+        </div>
+        <div class="modal-ftr">
+            <button class="btn-cancel" onclick="closeTokenModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast"></div>
+
+<script>
+    // Token map for active tokens
+    const TOKEN_MAP = {
+        {% for q in queues %}
+        "{{ q.id }}": [
+            {% for t in q.tokens %}
+            { id: "{{ t.id }}", number: "{{ t.number }}", service: "{{ t.service or '' }}", time: "{{ t.time or '' }}" }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ]{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+</script>
+
+<script src="{{ url_for('static', filename='js/queue_management.js') }}"></script>
+
+{% endblock %}
