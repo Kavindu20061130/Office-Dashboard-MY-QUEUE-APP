@@ -3,11 +3,11 @@ from flask import Flask
 # 🔹 Import Blueprints
 from routes.login import login
 from routes.dashboard import dashboard
-from routes.counterdashboard import counterdashboard
+from routes.counter_control import counter_control  # ✅ CHANGED from counterdashboard
 from routes.createcounterstaff import createcounterstaff
-
-#  ADD THIS
+from routes.createservice import createservice
 from routes.create_queue import createqueue
+from routes.queue_management import queue_management
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"
@@ -23,11 +23,11 @@ def add_header(response):
 # ---------------- REGISTER BLUEPRINTS ----------------
 app.register_blueprint(login)
 app.register_blueprint(dashboard)
-app.register_blueprint(counterdashboard)
+app.register_blueprint(counter_control)  # ✅ CHANGED from counterdashboard
 app.register_blueprint(createcounterstaff)
-
-#  ADD THIS
+app.register_blueprint(createservice)
 app.register_blueprint(createqueue)
+app.register_blueprint(queue_management)
 
 # ---------------- RUN APP ----------------
 if __name__ == "__main__":

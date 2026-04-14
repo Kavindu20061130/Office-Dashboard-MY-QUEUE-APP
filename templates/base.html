@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}QueueLK{% endblock %}</title>
+
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/withbackground.png') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- All styles now in one file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <div class="logo-section">
+            <img src="{{ url_for('static', filename='images/logo3.png') }}" alt="Logo">
+            <div class="brand-name">
+                <h2>QueueLK</h2>
+                <p>{{ office_name if office_name else "Department System" }}</p>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <a href="{{ url_for('dashboard.dashboard_home') }}"
+               class="nav-item {% if request.endpoint == 'dashboard.dashboard_home' %}active{% endif %}">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="{{ url_for('createcounterstaff.create_staff_page') }}"
+               class="nav-item {% if request.endpoint == 'createcounterstaff.create_staff_page' %}active{% endif %}">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Create Staff Account</span>
+            </a>
+
+            <a href="{{ url_for('createqueue.create_queue_page') }}"
+               class="nav-item {% if request.endpoint == 'createqueue.create_queue_page' %}active{% endif %}">
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>Create New Queue</span>
+            </a>
+
+            <a href="{{ url_for('queue_management.queue_management_page') }}"
+               class="nav-item {% if request.endpoint == 'queue_management.queue_management_page' %}active{% endif %}">
+                <i class="fa-solid fa-list"></i>
+                <span>Queue Management</span>
+            </a>
+
+            <a href="{{ url_for('counter_control.counter_dashboard_home') }}"
+               class="nav-item {% if request.endpoint == 'counter_control.counter_dashboard_home' %}active{% endif %}">
+                <i class="fa-solid fa-desktop"></i>
+                <span>Counter Control</span>
+            </a>
+
+            <a href="#" class="nav-item" onclick="showComingSoon()">
+                <i class="fa-solid fa-qrcode"></i>
+                <span>QR Scanner</span>
+            </a>
+        </div>
+
+        <div class="user-card">
+            <div class="avatar">
+                {{ (session.get('user','U')[:1]).upper() }}
+            </div>
+            <div class="user-details">
+                <div class="user-name">{{ session.get('user', 'Guest User') }}</div>
+                <small class="user-office">{{ office_name if office_name else "No Office Assigned" }}</small>
+                <small class="user-office-id">Office ID: {{ office_id if office_id else "N/A" }}</small>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN CONTAINER ===== -->
+    <main class="main-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">
+            <i class="fa-solid {% if category == 'success' %}fa-circle-check{% elif category == 'error' %}fa-circle-exclamation{% else %}fa-triangle-exclamation{% endif %}"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <div id="toast"></div>
+
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+
+    <script>
+        function showComingSoon() {
+            if (typeof showToast !== 'undefined') {
+                showToast('This feature is coming soon!', 'info');
+            } else {
+                alert('This feature is coming soon!');
+            }
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

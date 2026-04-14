@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 20px;
+            color: #333;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 { color: #147a33; }
+        .info { background: #e8f5ec; padding: 15px; border-radius: 10px; margin: 20px 0; }
+        .success { color: #147a33; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Counter Control Dashboard</h1>
+        <div class="info">
+            <p><strong>Status:</strong> <span class="success">Template loaded successfully!</span></p>
+            <p><strong>Current Time:</strong> {{ current_time }}</p>
+            <p><strong>Server Status:</strong> Running</p>
+            <p><strong>Template Path:</strong> templates/counter_control/dashboard.html</p>
+        </div>
+        
+        <h3>Test Variables:</h3>
+        <ul>
+            <li>Today's Tokens: {{ today_tokens | default(42) }}</li>
+            <li>Active Queue: {{ active_queue_count | default(8) }}</li>
+            <li>Completed Today: {{ completed_today | default(156) }}</li>
+        </ul>
+        
+        <hr>
+        <p style="text-align: center; color: #666;">
+            <i>✅ Template system is working correctly!</i>
+        </p>
+    </div>
+</body>
+</html>

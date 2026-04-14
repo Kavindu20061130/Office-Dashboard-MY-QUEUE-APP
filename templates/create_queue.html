@@ -1,646 +1,690 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create New Queue | Admin</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
-            color: #1a1a2e;
-        }
-        
-        /* Navigation Bar */
-        .navbar {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .nav-brand {
-            color: white;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        .nav-brand span {
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-        .nav-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-        .nav-btn {
-            padding: 0.5rem 1.2rem;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .nav-btn-dashboard {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        .nav-btn-dashboard:hover {
-            background: rgba(255,255,255,0.3);
-            transform: translateY(-2px);
-        }
-        .nav-btn-logout {
-            background: #e74c3c;
-            color: white;
-        }
-        .nav-btn-logout:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .header {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            padding: 1.5rem 2rem;
-        }
-        .header h1 { font-size: 1.8rem; font-weight: 600; }
-        .header p { opacity: 0.9; margin-top: 0.3rem; }
-        .form-section { padding: 2rem; }
-        .form-group { margin-bottom: 1.8rem; }
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #2c3e66;
-        }
-        .required:after { content: " *"; color: #e74c3c; }
-        input, select {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: 0.2s;
-        }
-        input:focus, select:focus {
-            outline: none;
-            border-color: #2a5298;
-            box-shadow: 0 0 0 3px rgba(42,82,152,0.2);
-        }
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-top: 0.5rem;
-        }
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: normal;
-            background: #f8f9fc;
-            padding: 0.5rem 1rem;
-            border-radius: 30px;
-            border: 1px solid #ddd;
-            cursor: pointer;
-        }
-        .checkbox-group input { width: auto; margin: 0; }
-        .custom-service-fields {
-            display: none;
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #f8f9fc;
-            border-radius: 16px;
-            border-left: 4px solid #2a5298;
-        }
-        .custom-service-fields.show { display: block; }
-        .row-2cols, .row-3cols { display: flex; gap: 1rem; }
-        .row-2cols > div, .row-3cols > div { flex: 1; }
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            margin-top: 2rem;
-        }
-        .btn {
-            padding: 0.75rem 1.8rem;
-            border: none;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            transition: all 0.3s;
-        }
-        .btn-primary { background: #2a5298; color: white; }
-        .btn-primary:hover { background: #1e3c72; transform: translateY(-2px); }
-        .btn-secondary { background: #e2e6ea; color: #2c3e66; }
-        .btn-secondary:hover { transform: translateY(-2px); }
-        .flash-messages { margin-bottom: 1rem; }
-        .flash {
-            padding: 0.75rem 1rem;
-            border-radius: 12px;
-            margin-bottom: 0.8rem;
-        }
-        .flash.success { background: #d4edda; color: #155724; border-left: 5px solid #28a745; }
-        .flash.error { background: #f8d7da; color: #721c24; border-left: 5px solid #dc3545; }
-        .flash.info { background: #d1ecf1; color: #0c5460; border-left: 5px solid #17a2b8; }
-        hr { margin: 1rem 0; border: none; border-top: 1px solid #e2e8f0; }
-        .token-preview {
-            background: #e9ecef;
-            border-radius: 12px;
-            padding: 0.5rem 1rem;
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-            color: #2a5298;
-            font-weight: 500;
-        }
-        
-        /* Modal Popup Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            animation: fadeIn 0.3s;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .modal-content {
-            background-color: white;
-            margin: 10% auto;
-            padding: 0;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 450px;
-            box-shadow: 0 5px 30px rgba(0,0,0,0.3);
-            animation: slideDown 0.3s;
-        }
-        @keyframes slideDown {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        .modal-header {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 20px 20px 0 0;
-            text-align: center;
-        }
-        .modal-header .success-icon {
-            font-size: 4rem;
-            margin-bottom: 0.5rem;
-        }
-        .modal-header h2 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-        }
-        .modal-body {
-            padding: 1.5rem;
-            text-align: center;
-        }
-        .modal-body p {
-            margin: 0.5rem 0;
-            color: #555;
-        }
-        .modal-body .queue-details {
-            background: #f8f9fc;
-            padding: 1rem;
-            border-radius: 12px;
-            margin: 1rem 0;
-            text-align: left;
-        }
-        .modal-body .queue-details p {
-            margin: 0.3rem 0;
-            font-size: 0.9rem;
-        }
-        .modal-footer {
-            padding: 1rem 1.5rem 1.5rem;
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-        .modal-btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            flex: 1;
-        }
-        .modal-btn-primary {
-            background: #2a5298;
-            color: white;
-        }
-        .modal-btn-primary:hover {
-            background: #1e3c72;
-            transform: translateY(-2px);
-        }
-        .modal-btn-secondary {
-            background: #28a745;
-            color: white;
-        }
-        .modal-btn-secondary:hover {
-            background: #218838;
-            transform: translateY(-2px);
-        }
-        .close {
-            float: right;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: white;
-            opacity: 0.8;
-        }
-        .close:hover {
-            opacity: 1;
-        }
-        
-        /* Loading Overlay */
-        .loading-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-        .loading-spinner {
-            background: white;
-            padding: 2rem;
-            border-radius: 20px;
-            text-align: center;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #2a5298;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QueueLK | Create Queue</title>
+
+  <!-- Favicon -->
+  <link rel="icon"       type="image/png" href="{{ url_for('static', filename='images/logo1.png') }}">
+  <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='images/logo1.png') }}">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/createqueue.css') }}">
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-brand">
-            Queue Management System
-            <span>| Admin Panel</span>
-        </div>
-        <div class="nav-buttons">
-            <a href="{{ url_for('dashboard.dashboard_home') }}" class="nav-btn nav-btn-dashboard">
-                📊 Dashboard
-            </a>
-            <!-- FIXED: Changed from 'auth.logout' to 'login.logout' -->
-            <a href="{{ url_for('login.logout') }}" class="nav-btn nav-btn-logout">
-                🚪 Logout
-            </a>
-        </div>
-    </nav>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="loading-spinner">
-            <div class="spinner"></div>
-            <p>Creating queue(s)...</p>
-        </div>
+<!-- ══════════════════════════════════════════
+     IMAGE BACKGROUND
+══════════════════════════════════════════ -->
+<div class="image-bg">
+  <img src="{{ url_for('static', filename='images/imagebackground.png') }}" alt="">
+  <div class="img-overlay"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOP NAV
+══════════════════════════════════════════ -->
+<nav class="topnav">
+  <div class="topnav-brand">
+    <img src="{{ url_for('static', filename='images/logo3.png') }}" alt="QueueLK Logo" class="nav-logo">
+    <span>QueueLK<em> Admin</em></span>
+  </div>
+  <div class="topnav-actions">
+    <a href="{{ url_for('dashboard.dashboard_home') }}" class="tnav-btn back-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Back to Dashboard
+    </a>
+    <a href="{{ url_for('login.logout') }}" class="tnav-btn logout-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Logout
+    </a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     TOAST
+══════════════════════════════════════════ -->
+<div id="toast" class="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     LOADING OVERLAY
+══════════════════════════════════════════ -->
+<div id="loadingOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:2000; align-items:center; justify-content:center;">
+  <div style="background:var(--glass); border:1px solid var(--glass-b); border-radius:var(--r-xl); padding:32px 40px; text-align:center; backdrop-filter:blur(32px);">
+    <div class="loading-spinner" style="width:40px;height:40px;border-width:3px;margin:0 auto 14px;"></div>
+    <p style="color:var(--txt-muted);font-size:.85rem;font-weight:600;">Creating queue…</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SUCCESS POPUP
+══════════════════════════════════════════ -->
+<div id="successOverlay" class="success-overlay">
+  <div class="success-popup" style="position:relative;">
+    <div class="success-icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
     </div>
 
-    <!-- Success Modal -->
-    <div id="successModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="close" onclick="closeModal()">&times;</span>
-                <div class="success-icon">✅</div>
-                <h2>Success!</h2>
-                <p>Queue created successfully</p>
+    <h3>Queue Created!</h3>
+    <p>Your queue is now active and ready to serve customers.</p>
+
+    <div class="queue-details-box">
+      <div class="detail-row">
+        <span class="detail-label">Queue Name</span>
+        <span class="detail-value" id="popupQueueName">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Counters Assigned</span>
+        <span class="detail-value" id="popupCounterCount">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Queue IDs</span>
+        <span class="detail-value" id="popupQueueIds" style="font-family:'JetBrains Mono',monospace;font-size:.78rem;">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Status</span>
+        <span class="detail-value status-active">● Active</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Created At</span>
+        <span class="detail-value" id="popupCreatedAt">—</span>
+      </div>
+    </div>
+
+    <div class="popup-actions">
+      <button id="addAnotherBtn" class="popup-btn secondary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Create Another
+      </button>
+      <a href="{{ url_for('dashboard.dashboard_home') }}" class="popup-btn primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Go to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SUCCESS DATA (injected by Flask on redirect)
+══════════════════════════════════════════ -->
+{% if success_data %}
+<div id="successData" style="display:none;"
+     data-queue-name="{{ success_data.queue_name }}"
+     data-queue-ids="{{ success_data.queue_ids }}"
+     data-counter-count="{{ success_data.counter_count }}">
+</div>
+{% endif %}
+
+<!-- LANDING SCENE -->
+<div class="scene" id="landingScene">
+  <div class="landing-content">
+    <div class="landing-kicker">
+      <span class="kicker-dot"></span>
+      Queue &amp; Service Management Portal
+    </div>
+    <h1 class="landing-h1">
+      What would you<br><span>like to create?</span>
+    </h1>
+    <div class="choices">
+      <button class="choice" onclick="selectMode('queue')">
+        <div class="choice-shimmer"></div>
+        <div class="choice-left">
+          <div class="cicon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </div>
+          <div class="choice-text">
+            <strong>Create New Queue</strong>
+            <span>Set up a queue with token prefix, assign counters, services and auto-close schedule</span>
+          </div>
+        </div>
+        <div class="choice-arrow green-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </button>
+      <button class="choice" onclick="selectMode('service')">
+        <div class="choice-shimmer amber-shimmer"></div>
+        <div class="choice-left">
+          <div class="cicon amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div class="choice-text">
+            <strong>Create New Service</strong>
+            <span>Register a service with a name and charge amount</span>
+          </div>
+        </div>
+        <div class="choice-arrow amber-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CARD (hidden until choice is made) -->
+<div class="modal-backdrop hidden" id="modalBackdrop">
+  <div class="modal-card">
+
+    <!-- TAB BAR -->
+    <div class="tab-bar">
+      <button class="tab active" data-tab="queue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+          <line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+        Create Queue
+      </button>
+      <button class="tab" data-tab="service">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        Create Service
+      </button>
+      <div class="tab-slider" id="tabSlider"></div>
+    </div>
+
+    <!-- ════════════════════════════════
+         QUEUE FORM PANEL
+    ════════════════════════════════ -->
+    <div class="form-body" id="queueCard">
+      <div class="form-scroll">
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages" style="margin-bottom:16px;">
+              {% for category, message in messages %}
+                <div class="flash-msg" style="
+                  padding:10px 14px;border-radius:var(--r-md);margin-bottom:8px;
+                  font-size:.82rem;font-weight:600;cursor:pointer;
+                  {% if category == 'error' %}
+                    background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;
+                  {% else %}
+                    background:rgba(13,183,96,.1);border:1px solid rgba(13,183,96,.3);color:#6ee7a4;
+                  {% endif %}
+                ">{{ message }}</div>
+              {% endfor %}
             </div>
-            <div class="modal-body">
-                <p>Your queue has been created and is now active.</p>
-                <div id="queueDetails" class="queue-details"></div>
-                <p>What would you like to do next?</p>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Heading -->
+        <div class="form-heading">
+          <div class="fh-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </div>
+          <div>
+            <h2>Create New Queue</h2>
+            <p>Assign counters, services, token prefix and auto-close schedule</p>
+          </div>
+        </div>
+
+        <!-- FORM -->
+        <form id="queueForm" method="POST" action="{{ url_for('createqueue.create_queue_page') }}">
+
+          <!-- ── SERVICE ── -->
+          <div class="field">
+            <label class="lbl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              Service <span class="req">*</span>
+            </label>
+            <div class="seg">
+              <label class="seg-opt">
+                <input type="radio" name="service_option" value="existing" checked>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  Existing Service
+                </span>
+              </label>
+              <label class="seg-opt">
+                <input type="radio" name="service_option" value="custom">
+                <span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                  </svg>
+                  Create Custom
+                </span>
+              </label>
             </div>
-            <div class="modal-footer">
-                <a href="{{ url_for('createqueue.create_queue_page') }}" class="modal-btn modal-btn-secondary" onclick="closeModal()">
-                    ➕ Create Another Queue
-                </a>
-                <a href="{{ url_for('dashboard.dashboard_home') }}" class="modal-btn modal-btn-primary" onclick="closeModal()">
-                    📊 Go to Dashboard
-                </a>
+
+            <!-- Existing service dropdown -->
+            <div id="existingServiceDiv" class="sub-field">
+              <div class="inp-wrap">
+                <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <select name="existing_service_id">
+                  {% for svc in services %}
+                    <option value="{{ svc.id }}">{{ svc.name }} — LKR {{ svc.charge }}</option>
+                  {% else %}
+                    <option disabled>No services available</option>
+                  {% endfor %}
+                </select>
+              </div>
             </div>
+
+            <!-- Custom service fields -->
+            <div id="customServiceDiv" class="sub-field" style="display:none;">
+              <div class="sub-field-panel">
+                <div class="field-row" style="margin-bottom:0;">
+                  <div class="field" style="margin-bottom:0;">
+                    <label class="lbl" style="margin-bottom:6px;">Service Name</label>
+                    <div class="inp-wrap">
+                      <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                      <input type="text" name="custom_service_name" placeholder="e.g. Vehicle Registration">
+                    </div>
+                  </div>
+                  <div class="field" style="margin-bottom:0;">
+                    <label class="lbl" style="margin-bottom:6px;">Charge (LKR)</label>
+                    <div class="inp-wrap">
+                      <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"/>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                      </svg>
+                      <input type="number" name="custom_service_charge" placeholder="e.g. 1500" min="0">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- ── QUEUE NAME ── -->
+          <div class="field">
+            <label class="lbl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                <path d="M4 6h16M4 12h16M4 18h7"/>
+              </svg>
+              Queue Name <span class="req">*</span>
+            </label>
+            <div class="inp-wrap">
+              <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="3" y1="6" x2="3.01" y2="6"/>
+              </svg>
+              <input type="text" name="queue_name" placeholder="e.g. NIC Renewal Queue" required>
+            </div>
+          </div>
+
+          <!-- ── TOKEN PREFIX & RANGE ── -->
+          <div class="field">
+            <label class="lbl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+              </svg>
+              Token Prefix &amp; Range
+            </label>
+            <div class="field-row-3" style="margin-bottom:8px;">
+              <div class="field" style="margin-bottom:0;">
+                <label class="lbl" style="margin-bottom:6px;">Letter</label>
+                <div class="inp-wrap">
+                  <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="4 7 4 4 20 4 20 7"/>
+                    <line x1="9" y1="20" x2="15" y2="20"/>
+                    <line x1="12" y1="4" x2="12" y2="20"/>
+                  </svg>
+                  <select name="token_letter" id="token_letter">
+                    {% for letter in letters %}
+                      <option value="{{ letter }}">{{ letter }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label class="lbl" style="margin-bottom:6px;">Starting No.</label>
+                <div class="inp-wrap">
+                  <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="1" x2="12" y2="23"/>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5"/>
+                  </svg>
+                  <input type="number" name="token_start_number" id="token_start_number" value="1" min="1">
+                </div>
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label class="lbl" style="margin-bottom:6px;">Max Capacity</label>
+                <div class="inp-wrap">
+                  <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                  <input type="number" name="max_capacity" id="max_capacity" value="50" min="1">
+                </div>
+              </div>
+            </div>
+            <!-- Live preview -->
+            <div class="token-preview">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+              </svg>
+              <span id="tokenPreview">A-001 → A-050</span>
+            </div>
+          </div>
+
+          <!-- ── QUEUE TYPE ── -->
+          <div class="field">
+            <label class="lbl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Queue Type
+            </label>
+            <div class="inp-wrap">
+              <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <select name="queue_type">
+                <option value="Short">Short</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Long">Long</option>
+                <option value="Normal">Normal</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- ── COUNTERS ── -->
+          <div class="field">
+            <label class="lbl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                <line x1="8" y1="21" x2="16" y2="21"/>
+                <line x1="12" y1="17" x2="12" y2="21"/>
+              </svg>
+              Assign to Counters <span class="req">*</span>
+              <em class="hint">select one or more</em>
+            </label>
+
+            {% if counters %}
+              <div class="checkbox-grid">
+                {% for counter in counters %}
+                  <label class="check-item">
+                    <input type="checkbox" name="counters" value="{{ counter.id }}">
+                    <span>{{ counter.name }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="empty-warning">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                No counters found for this office.
+                <a href="/create-counter">Create a counter first</a>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- ── AUTO-CLOSE SCHEDULE ── -->
+          <div class="field">
+            <label class="lbl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Auto-close Schedule
+              <span class="opt-tag">Optional</span>
+            </label>
+            <div class="field-row" style="margin-bottom:0;">
+              <div class="field" style="margin-bottom:0;">
+                <label class="lbl" style="margin-bottom:6px;">Set Inactive At</label>
+                <div class="inp-wrap">
+                  <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <input type="time" name="auto_inactive_time" step="60">
+                </div>
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label class="lbl" style="margin-bottom:6px;">Set Active At</label>
+                <div class="inp-wrap">
+                  <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <input type="time" name="auto_active_time" step="60">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-note" style="margin-top:14px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            A separate queue document is created per counter. Make sure your counters are active before assigning.
+          </div>
+
+          <!-- ── SUBMIT ── -->
+          <button type="submit" class="submit-btn green-btn" id="submitBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+            </svg>
+            Create Queue
+          </button>
+
+        </form>
+      </div>
+    </div>
+    <!-- end queueCard -->
+
+    <!-- ════════════════════════════════
+         SERVICE FORM PANEL
+    ════════════════════════════════ -->
+    <div class="form-body" id="serviceCard" style="display:none;">
+      <div class="form-scroll">
+
+        <!-- Heading -->
+        <div class="form-heading">
+          <div class="fh-icon amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div>
+            <h2>Create New Service</h2>
+            <p>Register a service with a name and charge amount</p>
+          </div>
         </div>
+
+        <form id="serviceForm">
+
+          <!-- SERVICE NAME -->
+          <div class="field">
+            <label class="lbl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Service Name <span class="req">*</span>
+            </label>
+            <div class="inp-wrap">
+              <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              <input type="text" id="svcName" placeholder="e.g. Driving License Renewal" autocomplete="off">
+            </div>
+          </div>
+
+          <!-- CHARGE -->
+          <div class="field">
+            <label class="lbl">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              Charge (LKR) <span class="req">*</span>
+            </label>
+            <div class="inp-wrap">
+              <!-- LKR prefix badge -->
+              <span style="
+                position:absolute;left:13px;
+                font-size:.75rem;font-weight:700;
+                color:var(--amber);
+                pointer-events:none;letter-spacing:.04em;
+              ">LKR</span>
+              <input
+                type="number"
+                id="svcCharge"
+                placeholder="e.g. 2500"
+                min="0"
+                step="1"
+                style="padding-left:52px;"
+              >
+            </div>
+          </div>
+
+          <div class="info-note" style="margin-top:4px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            Services are saved globally and can be assigned to any queue across all offices.
+          </div>
+
+          <!-- SUBMIT -->
+          <button type="submit" class="submit-btn amber-btn" id="svcSubmitBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+            </svg>
+            Create Service
+          </button>
+
+        </form>
+      </div>
+    </div>
+    <!-- end serviceCard -->
+
+  </div><!-- end modal-card -->
+</div><!-- end modal-backdrop -->
+
+<!-- ══════════════════════════════════════════
+     SERVICE SUCCESS POPUP
+══════════════════════════════════════════ -->
+<div id="serviceSuccessOverlay" class="success-overlay" style="--popup-accent: var(--amber); --popup-glow: var(--amber-glow);">
+  <div class="success-popup" style="border-color:rgba(245,158,11,.4); box-shadow: 0 0 0 1px rgba(255,255,255,.05), 0 40px 80px rgba(0,0,0,.5), 0 0 40px rgba(245,158,11,.18);">
+    <div class="success-icon-wrap" style="background:linear-gradient(135deg,var(--amber),var(--amber-deep)); box-shadow:0 0 30px var(--amber-glow);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
     </div>
 
-    <!-- Hidden div for success data -->
-    {% if success_data %}
-    <div id="successData" style="display: none;" 
-         data-queue-name="{{ success_data.queue_name }}"
-         data-queue-ids="{{ success_data.queue_ids }}"
-         data-counter-count="{{ success_data.counter_count }}">
-    </div>
-    {% endif %}
+    <h3 style="background:linear-gradient(135deg,#fcd34d,#d97706); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">
+      Service Created!
+    </h3>
+    <p>The service has been registered and is ready to be assigned to queues.</p>
 
-    <div class="container">
-        <div class="header">
-            <h1>➕ Create New Queue</h1>
-            <p>Assign counters, services, token prefix, and auto‑close schedule</p>
-        </div>
-
-        <div class="form-section">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="flash-messages">
-                        {% for category, message in messages %}
-                            <div class="flash {{ category }}">{{ message }}</div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-
-            <form method="POST" id="queueForm" onsubmit="showLoading()">
-                <!-- Service Section -->
-                <div class="form-group">
-                    <label class="required">Service</label>
-                    <select name="service_option" id="service_option">
-                        <option value="existing">Choose from existing services</option>
-                        <option value="custom">➕ Create custom service</option>
-                    </select>
-                    <div id="existing_service_div" style="margin-top: 0.8rem;">
-                        <select name="existing_service_id">
-                            {% for svc in services %}
-                                <option value="{{ svc.id }}">{{ svc.name }} (LKR {{ svc.charge }})</option>
-                            {% else %}
-                                <option disabled>No services available</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div id="custom_service_div" class="custom-service-fields">
-                        <div class="row-2cols">
-                            <div>
-                                <label>Service Name</label>
-                                <input type="text" name="custom_service_name" placeholder="e.g. Vehicle Registration">
-                            </div>
-                            <div>
-                                <label>Charge (LKR)</label>
-                                <input type="number" name="custom_service_charge" placeholder="e.g. 1500">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <hr>
-
-                <!-- Queue Name -->
-                <div class="form-group">
-                    <label class="required">Queue Name</label>
-                    <input type="text" name="queue_name" placeholder="e.g. NIC Renewal Queue" required>
-                </div>
-
-                <!-- Token Prefix & Range -->
-                <div class="form-group">
-                    <label>Token Prefix & Range</label>
-                    <div class="row-3cols">
-                        <div>
-                            <label>Letter</label>
-                            <select name="token_letter" id="token_letter">
-                                {% for letter in letters %}
-                                    <option value="{{ letter }}">{{ letter }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label>Starting Number</label>
-                            <input type="number" name="token_start_number" id="token_start_number" value="1" min="1">
-                        </div>
-                        <div>
-                            <label>Max Capacity</label>
-                            <input type="number" name="max_capacity" id="max_capacity" value="50" min="1">
-                        </div>
-                    </div>
-                    <div class="token-preview" id="token_range_preview">A-001 to A-050</div>
-                </div>
-
-                <!-- Queue Type -->
-                <div class="form-group">
-                    <label>Queue Type</label>
-                    <select name="queue_type">
-                        <option value="Short">Short</option>
-                        <option value="Medium" selected>Medium</option>
-                        <option value="Long">Long</option>
-                        <option value="Normal">Normal</option>
-                    </select>
-                </div>
-
-                <hr>
-
-                <!-- Counters (multi-select) -->
-                <div class="form-group">
-                    <label class="required">Assign to Counters (can select multiple)</label>
-                    <div class="checkbox-group">
-                        {% for counter in counters %}
-                            <label>
-                                <input type="checkbox" name="counters" value="{{ counter.id }}">
-                                {{ counter.name }}
-                            </label>
-                        {% else %}
-                            <p style="color: #e74c3c;">No counters found for this office. <a href="/create-counter">Create a counter first</a></p>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <hr>
-
-                <!-- Auto‑close schedule -->
-                <div class="form-group">
-                    <label>Auto‑close schedule (optional)</label>
-                    <div class="row-2cols">
-                        <div>
-                            <label>Set Inactive at</label>
-                            <input type="time" name="auto_inactive_time" step="60">
-                        </div>
-                        <div>
-                            <label>Set Active at</label>
-                            <input type="time" name="auto_active_time" step="60">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="form-actions">
-                    <a href="{{ url_for('dashboard.dashboard_home') }}" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-primary">🚀 Create Queue</button>
-                </div>
-            </form>
-        </div>
+    <div class="queue-details-box" style="background:rgba(245,158,11,.08); border-color:rgba(245,158,11,.22);">
+      <div class="detail-row">
+        <span class="detail-label">Service ID</span>
+        <span class="detail-value" id="svcPopupId" style="font-family:'JetBrains Mono',monospace; color:var(--amber);">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Name</span>
+        <span class="detail-value" id="svcPopupName">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Charge</span>
+        <span class="detail-value" id="svcPopupCharge" style="color:var(--amber);">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Created At</span>
+        <span class="detail-value" id="svcPopupAt">—</span>
+      </div>
     </div>
 
-    <script>
-        // Toggle custom service fields
-        const serviceOption = document.getElementById('service_option');
-        const existingDiv = document.getElementById('existing_service_div');
-        const customDiv = document.getElementById('custom_service_div');
-        
-        function toggleServiceFields() {
-            if (serviceOption.value === 'existing') {
-                existingDiv.style.display = 'block';
-                customDiv.classList.remove('show');
-            } else {
-                existingDiv.style.display = 'none';
-                customDiv.classList.add('show');
-            }
-        }
-        
-        serviceOption.addEventListener('change', toggleServiceFields);
-        toggleServiceFields();
+    <div class="popup-actions">
+      <button id="svcAddAnotherBtn" class="popup-btn secondary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Add Another
+      </button>
+      <a href="{{ url_for('dashboard.dashboard_home') }}" class="popup-btn" style="background:linear-gradient(135deg,var(--amber),var(--amber-deep)); color:white; box-shadow:0 4px 15px var(--amber-glow); flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:12px 18px; border-radius:var(--r-md); font-weight:700; font-size:.83rem; text-decoration:none; border:none; cursor:pointer; transition:all .25s var(--ease);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Go to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
 
-        // Real-time token range preview
-        const letterSelect = document.getElementById('token_letter');
-        const startNumberInput = document.getElementById('token_start_number');
-        const maxCapacityInput = document.getElementById('max_capacity');
-        const previewSpan = document.getElementById('token_range_preview');
-
-        function formatNumber(num, digits=3) {
-            return num.toString().padStart(digits, '0');
-        }
-
-        function updateTokenPreview() {
-            const letter = letterSelect.value;
-            let startNum = parseInt(startNumberInput.value, 10);
-            let maxCap = parseInt(maxCapacityInput.value, 10);
-            if (isNaN(startNum)) startNum = 1;
-            if (isNaN(maxCap)) maxCap = 50;
-            if (maxCap < 1) maxCap = 1;
-            const endNum = startNum + maxCap - 1;
-            previewSpan.textContent = `${letter}-${formatNumber(startNum)} to ${letter}-${formatNumber(endNum)}`;
-        }
-
-        letterSelect.addEventListener('change', updateTokenPreview);
-        startNumberInput.addEventListener('input', updateTokenPreview);
-        maxCapacityInput.addEventListener('input', updateTokenPreview);
-        updateTokenPreview();
-
-        // Show loading overlay
-        function showLoading() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
-            return true;
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
-
-        // Modal functions
-        function showModal(queueName, queueIds, counterCount) {
-            const modal = document.getElementById('successModal');
-            const queueDetails = document.getElementById('queueDetails');
-            
-            queueDetails.innerHTML = `
-                <p><strong>Queue Name:</strong> ${escapeHtml(queueName)}</p>
-                <p><strong>Number of Queues Created:</strong> ${counterCount}</p>
-                <p><strong>Queue IDs:</strong> ${escapeHtml(queueIds)}</p>
-                <p><strong>Status:</strong> <span style="color: #28a745;">Active</span></p>
-                <p><strong>Created At:</strong> ${new Date().toLocaleString()}</p>
-            `;
-            
-            modal.style.display = 'block';
-            hideLoading();
-            
-            // Remove any flash messages if they exist
-            const flashMessages = document.querySelector('.flash-messages');
-            if (flashMessages) {
-                flashMessages.style.display = 'none';
-            }
-        }
-        
-        // Helper function to escape HTML
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function closeModal() {
-            document.getElementById('successModal').style.display = 'none';
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('successModal');
-            if (event.target == modal) {
-                modal.style.display = 'none';
-            }
-        }
-
-        // Check for success data from hidden div
-        window.onload = function() {
-            const successDiv = document.getElementById('successData');
-            if (successDiv) {
-                const queueName = successDiv.getAttribute('data-queue-name');
-                const queueIds = successDiv.getAttribute('data-queue-ids');
-                const counterCount = successDiv.getAttribute('data-counter-count');
-                if (queueName && queueIds && counterCount) {
-                    showModal(queueName, queueIds, counterCount);
-                }
-            }
-            
-            // Auto-hide flash messages after 5 seconds
-            setTimeout(function() {
-                const flashes = document.querySelectorAll('.flash');
-                flashes.forEach(flash => {
-                    flash.style.opacity = '0';
-                    flash.style.transition = 'opacity 0.5s';
-                    setTimeout(() => flash.remove(), 500);
-                });
-            }, 5000);
-            
-            // Allow clicking to dismiss flash messages
-            document.querySelectorAll('.flash').forEach(flash => {
-                flash.addEventListener('click', () => flash.remove());
-            });
-        }
-    </script>
+<!-- JS -->
+<script src="{{ url_for('static', filename='js/createqueue.js') }}"></script>
 </body>
 </html>
