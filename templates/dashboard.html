@@ -1,4 +1,3 @@
-<!-- templates/dashboard.html -->
 {% extends "base.html" %}
 
 {% block title %}Dashboard | QueueLK{% endblock %}
@@ -34,8 +33,10 @@
 </div>
 
 <div class="dashboard-extra">
+
     <!-- Stats Cards -->
     <div class="stats-container">
+
         <div class="card">
             <div class="card-top">
                 <p>Tokens Today</p>
@@ -67,6 +68,7 @@
             </div>
             <h2>{{ counters_count }}</h2>
         </div>
+
     </div>
 
     <!-- Queue Section -->
@@ -79,6 +81,7 @@
                 <button class="tab">Active (0)</button>
                 <button class="tab">Paused (0)</button>
             </div>
+
             <a href="{{ url_for('createqueue.create_queue_page') }}" class="create-btn">
                 <i class="fa-solid fa-plus"></i> Create New Queue
             </a>
@@ -118,6 +121,7 @@
         </div>
         {% endif %}
     </div>
+
 </div>
 
 <!-- MODAL -->
@@ -137,7 +141,6 @@
 </div>
 
 <script>
-    // Pass data to JavaScript
     const OFFICE_NAME = "{{ office_name or '' }}";
     const OPEN_TIME = "{{ open_time or '' }}";
     const CLOSE_TIME = "{{ close_time or '' }}";
