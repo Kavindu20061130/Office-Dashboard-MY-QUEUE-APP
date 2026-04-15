@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QueueLK | Counter Scanner</title>
+    <link rel="icon" type="image/png" href="/static/images/withbackground.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Base counter dashboard styles (sidebar, cards, etc.) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/counterdashboard.css') }}">
+    <!-- Split‑layout scanner specific styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/counterscanner.css') }}">
+    <!-- HTML5 QR Code -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+<!-- SIDEBAR (identical to counter dashboard) -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <div class="sidebar-logo">
+            <img src="/static/images/logo1.png" alt="Logo" onerror="this.style.display='none'">
+            <div class="shield-fallback"><i class="fa-solid fa-shield-halved"></i></div>
+        </div>
+        <div class="sidebar-brand-text">
+            <h2>Queue<span>LK</span></h2>
+            <p id="sidebar-office-name">Loading...</p>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a href="/counterdashboard" class="nav-item">
+            <i class="fa-solid fa-house"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="/counterdashboard/scanner" class="nav-item active">
+            <i class="fa-solid fa-qrcode"></i>
+            <span>QR Scanner</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-user">
+        <div class="user-avatar" id="userAvatar">C</div>
+        <div class="user-info">
+            <div class="user-name" id="sidebar-user-name">Counter</div>
+        </div>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="topbar-title">Counter Scanner</div>
+        <div class="topbar-right">
+            <a href="/logout" class="logout-btn">
+                <i class="fa-solid fa-power-off"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- SPLIT LAYOUT (like admin scanner) -->
+    <div class="split-layout">
+        <!-- LEFT PANEL: Waiting Tokens with Search -->
+        <div class="left-panel">
+            <!-- Office / Queue / Counter summary cards (compact) -->
+            <div class="info-cards compact">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fa-regular fa-building"></i>
+                        <span>Office</span>
+                    </div>
+                    <div class="info-card-value" id="office">—</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fa-solid fa-list-ul"></i>
+                        <span>Queue</span>
+                    </div>
+                    <div class="info-card-value" id="queue">—</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <i class="fa-solid fa-gear"></i>
+                        <span>Counter</span>
+                    </div>
+                    <div class="info-card-value" id="counter">—</div>
+                </div>
+            </div>
+
+            <div class="waiting-section">
+                <div class="section-title">
+                    <i class="fa-solid fa-clock"></i> Waiting Tokens (Your Queue)
+                    <div class="search-box">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="searchWaiting" placeholder="Search by number or service...">
+                    </div>
+                </div>
+                <div id="waitingTokensList" class="token-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <i class="fa-solid fa-circle-info"></i> <strong>How it works</strong><br>
+                First scan → records arrival time. Second scan → completes service.
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: QR Scanner + Controls -->
+        <div class="right-panel">
+            <h1 style="font-size: 1.5rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-qrcode"></i> QR Scanner
+            </h1>
+
+            <!-- Camera & Resolution Controls -->
+            <div class="scanner-controls">
+                <div class="control-group">
+                    <label><i class="fa-solid fa-camera"></i> Camera</label>
+                    <select id="cameraSelect"></select>
+                </div>
+                <div class="control-group">
+                    <label><i class="fa-solid fa-expand"></i> Resolution</label>
+                    <select id="resolutionSelect">
+                        <option value="640x480">SD (640x480)</option>
+                        <option value="1280x720" selected>HD (1280x720)</option>
+                        <option value="1920x1080">Full HD (1920x1080)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label><i class="fa-solid fa-keyboard"></i> Manual Token</label>
+                    <div class="manual-input-group">
+                        <input type="text" id="manualTokenId" placeholder="e.g., token_1">
+                        <button id="manualScanBtn" class="btn-primary"><i class="fa-solid fa-qrcode"></i> Scan</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                    <button id="soundToggleBtn" class="btn-primary" style="background:#475569;">
+                        <i class="fa-solid fa-volume-high"></i> Sound ON
+                    </button>
+                </div>
+            </div>
+
+            <!-- QR Reader -->
+            <div id="reader"></div>
+        </div>
+    </div>
+</main>
+
+<!-- MODAL (same as before) -->
+<div id="tokenModal" class="qr-modal">
+    <div class="qr-modal-content">
+        <div id="modalIcon" class="check-icon"></div>
+        <h2 id="modalTitle">Token Arrived</h2>
+        <div id="tokenDetails" class="token-detail"></div>
+        <div id="modalExtra"></div>
+        <button id="modalCloseBtn" class="btn-modal btn-secondary">Close</button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/counterscanner.js') }}"></script>
+</body>
+</html>

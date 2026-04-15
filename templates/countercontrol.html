@@ -1,49 +1,154 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Test Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 50px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: rgba(255,255,255,0.95);
-            padding: 30px;
-            border-radius: 20px;
-            color: #333;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-        h1 { color: #147a33; }
-        .info { background: #e8f5ec; padding: 15px; border-radius: 10px; margin: 20px 0; }
-        .success { color: #147a33; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>✅ Counter Control Dashboard</h1>
-        <div class="info">
-            <p><strong>Status:</strong> <span class="success">Template loaded successfully!</span></p>
-            <p><strong>Current Time:</strong> {{ current_time }}</p>
-            <p><strong>Server Status:</strong> Running</p>
-            <p><strong>Template Path:</strong> templates/counter_control/dashboard.html</p>
-        </div>
-        
-        <h3>Test Variables:</h3>
-        <ul>
-            <li>Today's Tokens: {{ today_tokens | default(42) }}</li>
-            <li>Active Queue: {{ active_queue_count | default(8) }}</li>
-            <li>Completed Today: {{ completed_today | default(156) }}</li>
-        </ul>
-        
-        <hr>
-        <p style="text-align: center; color: #666;">
-            <i>✅ Template system is working correctly!</i>
-        </p>
+{% extends "base.html" %}
+
+{% block title %}Counter Control - Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/countercontrol.css') }}">
+<script type="module" src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.10/dist/dotlottie-wc.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="counter-control">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="{{ url_for('dashboard.dashboard_home') }}">Dashboard</a>
+        <span class="separator">></span>
+        <span class="current">Counter Control</span>
     </div>
-</body>
-</html>
+
+    <div class="page-header">
+        <h1><i class="fas fa-tachometer-alt"></i> Counter Control</h1>
+        <p>Manage counters, their status, and all associated tokens for your office</p>
+    </div>
+
+    <div class="control-layout">
+        <!-- Left panel: Counters list -->
+        <aside class="counters-panel">
+            <div class="panel-header">
+                <h3><i class="fas fa-store"></i> Your Counters</h3>
+                <span class="counter-count" id="counterCount">0</span>
+            </div>
+            <div class="counters-list" id="countersList">
+                <div class="loading-state">
+                    <dotlottie-wc src="https://lottie.host/3d6adda6-880d-4ffc-94b2-50db5e89f1e0/eWLnP5z6OG.lottie"
+                        style="width: 100px; height: 100px;" autoplay loop></dotlottie-wc>
+                    <p>Loading counters...</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right panel: Selected counter details & tokens -->
+        <main class="details-panel">
+            <!-- No Counter Selected State (Visible by default) -->
+            <div id="noCounterSelected" class="empty-state">
+                <i class="fas fa-hand-pointer"></i>
+                <h3>No Counter Selected</h3>
+                <p>Select a counter from the left panel to manage its tokens and status.</p>
+            </div>
+
+            <!-- Counter Details (Hidden by default) -->
+            <div id="counterDetails" style="display: none;">
+                <!-- Counter info card -->
+                <div class="info-card">
+                    <div class="info-header">
+                        <div>
+                            <h2 id="counterName">-</h2>
+                            <div class="counter-meta">
+                                <span class="counter-id" id="counterId"></span>
+                                <span class="office-name" id="officeName"></span>
+                            </div>
+                        </div>
+                        <div class="status-pill" id="statusBadge">INACTIVE</div>
+                    </div>
+
+                    <div class="status-toggle-row">
+                        <label class="toggle-label">
+                            <span class="toggle-text">Counter Status</span>
+                            <label class="switch">
+                                <input type="checkbox" id="statusToggle">
+                                <span class="slider round"></span>
+                            </label>
+                            <span id="statusText" class="status-text">Inactive</span>
+                        </label>
+                        
+                        <!-- ACTION BUTTONS - These will be visible when a counter is selected -->
+                        <div class="action-buttons">
+                            <button class="btn btn-outline" id="refreshTokensBtn">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                            <button class="btn btn-danger" id="completeCounterBtn">
+                                <i class="fas fa-trash-alt"></i> Complete Counter
+                            </button>
+                            <button class="btn btn-danger" id="deleteCounterBtn" style="background-color: #dc2626;">
+                                <i class="fas fa-trash-alt"></i> Delete Counter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tokens section -->
+                <div class="tokens-section">
+                    <div class="tokens-header">
+                        <h3><i class="fas fa-ticket-alt"></i> Active Tokens</h3>
+                        <span class="token-count" id="tokenCount">0</span>
+                    </div>
+                    <div class="tokens-grid" id="tokensContainer">
+                        <div class="loading-state">
+                            <dotlottie-wc
+                                src="https://lottie.host/3d6adda6-880d-4ffc-94b2-50db5e89f1e0/eWLnP5z6OG.lottie"
+                                style="width: 100px; height: 100px;" autoplay loop></dotlottie-wc>
+                            <p>Loading tokens...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Arrival Time Modal -->
+<div id="arrivalModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-clock"></i> Set Arrival Time</h3>
+            <button class="close-modal" id="closeModalBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label>Time (HH:MM) - Sri Lanka Time</label>
+            <input type="time" id="arrivalTimeInput" step="60" class="modal-input">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancelArrivalBtn">Cancel</button>
+            <button class="btn btn-primary" id="saveArrivalBtn">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal confirm-modal">
+    <div class="modal-content confirm-modal-content">
+        <div class="modal-header confirm-modal-header">
+            <h3 id="confirmModalTitle"><i class="fas fa-question-circle"></i> Confirm Action</h3>
+            <button class="close-modal" id="closeConfirmModalBtn">&times;</button>
+        </div>
+        <div class="modal-body confirm-modal-body">
+            <div class="confirm-icon" id="confirmIcon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <p id="confirmMessage">Are you sure you want to perform this action?</p>
+            <div class="token-info-preview" id="tokenInfoPreview" style="display: none;">
+                <div class="preview-token-number" id="previewTokenNumber"></div>
+                <div class="preview-token-details" id="previewTokenDetails"></div>
+            </div>
+        </div>
+        <div class="modal-footer confirm-modal-footer">
+            <button class="btn btn-secondary" id="cancelConfirmBtn">Cancel</button>
+            <button class="btn btn-primary" id="confirmActionBtn">Confirm</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/countercontrol.js') }}"></script>
+{% endblock %}

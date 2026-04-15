@@ -30,36 +30,37 @@
 
         <div class="nav-group">
             <a href="{{ url_for('dashboard.dashboard_home') }}"
-               class="nav-item {% if request.endpoint == 'dashboard.dashboard_home' %}active{% endif %}">
+                class="nav-item {% if request.endpoint == 'dashboard.dashboard_home' %}active{% endif %}">
                 <i class="fa-solid fa-house"></i>
                 <span>Dashboard</span>
             </a>
 
             <a href="{{ url_for('createcounterstaff.create_staff_page') }}"
-               class="nav-item {% if request.endpoint == 'createcounterstaff.create_staff_page' %}active{% endif %}">
+                class="nav-item {% if request.endpoint == 'createcounterstaff.create_staff_page' %}active{% endif %}">
                 <i class="fa-solid fa-user-plus"></i>
                 <span>Create Staff Account</span>
             </a>
 
             <a href="{{ url_for('createqueue.create_queue_page') }}"
-               class="nav-item {% if request.endpoint == 'createqueue.create_queue_page' %}active{% endif %}">
+                class="nav-item {% if request.endpoint == 'createqueue.create_queue_page' %}active{% endif %}">
                 <i class="fa-solid fa-plus-circle"></i>
                 <span>Create New Queue</span>
             </a>
 
             <a href="{{ url_for('queue_management.queue_management_page') }}"
-               class="nav-item {% if request.endpoint == 'queue_management.queue_management_page' %}active{% endif %}">
+                class="nav-item {% if request.endpoint == 'queue_management.queue_management_page' %}active{% endif %}">
                 <i class="fa-solid fa-list"></i>
                 <span>Queue Management</span>
             </a>
 
-            <a href="{{ url_for('counter_control.counter_dashboard_home') }}"
-               class="nav-item {% if request.endpoint == 'counter_control.counter_dashboard_home' %}active{% endif %}">
+            <a href="{{ url_for('counter_control.counter_control_page') }}"
+                class="nav-item {% if request.endpoint == 'counter_control.counter_control_page' %}active{% endif %}">
                 <i class="fa-solid fa-desktop"></i>
                 <span>Counter Control</span>
             </a>
 
-            <a href="#" class="nav-item" onclick="showComingSoon()">
+            
+            <a href="{{ url_for('qr_scanner.scanner_page') }}" class="nav-item">
                 <i class="fa-solid fa-qrcode"></i>
                 <span>QR Scanner</span>
             </a>
@@ -83,7 +84,8 @@
         {% if messages %}
         {% for category, message in messages %}
         <div class="flash-message flash-{{ category }}">
-            <i class="fa-solid {% if category == 'success' %}fa-circle-check{% elif category == 'error' %}fa-circle-exclamation{% else %}fa-triangle-exclamation{% endif %}"></i>
+            <i
+                class="fa-solid {% if category == 'success' %}fa-circle-check{% elif category == 'error' %}fa-circle-exclamation{% else %}fa-triangle-exclamation{% endif %}"></i>
             {{ message }}
         </div>
         {% endfor %}
@@ -109,4 +111,5 @@
 
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>

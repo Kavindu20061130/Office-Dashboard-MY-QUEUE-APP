@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QueueLK | Token Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary-green: #0a2e1f;
+            --accent-green: #1ed760;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: radial-gradient(circle at top right, #0d3d2a, #05160f);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { font-size: 2rem; letter-spacing: -1px; margin-bottom: 8px; }
+        .header p { color: #a0aec0; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 14px;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .btn-generate {
+            background: var(--accent-green);
+            color: var(--primary-green);
+            border: none;
+            padding: 0 30px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-generate:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .token-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            color: #1a202c;
+            text-align: center;
+            animation: fadeIn 0.4s ease-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .token-card h3 { margin: 10px 0 5px 0; color: var(--primary-green); }
+        .token-card p { font-size: 0.8rem; font-weight: 600; color: #718096; margin-bottom: 15px; }
+
+        .qr-placeholder {
+            margin-bottom: 10px;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-action {
+            flex: 1;
+            border: none;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-download { background: #e2e8f0; color: #2d3748; }
+        .btn-delete { background: #fff5f5; color: #c53030; }
+        .btn-action:hover { opacity: 0.8; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>QueueLK Admin</h1>
+        <p>Token Generator & Dispatcher</p>
+    </div>
+
+    <div class="glass-card">
+        <div class="form-grid">
+            <input type="text" id="docId" placeholder="Firestore ID (token_1)">
+            <input type="text" id="tokenNum" placeholder="Number (L001)">
+            <button class="btn-generate" onclick="addNewToken()">✨ Generate</button>
+        </div>
+
+        <div id="qrGrid" class="qr-grid"></div>
+    </div>
+</div>
+
+<script>
+    function addNewToken() {
+        const docId = document.getElementById('docId').value.trim();
+        const tokenNum = document.getElementById('tokenNum').value.trim();
+
+        if (!docId || !tokenNum) {
+            alert("Please fill both fields");
+            return;
+        }
+
+        const grid = document.getElementById('qrGrid');
+        
+        // Create Card
+        const card = document.createElement('div');
+        card.className = 'token-card';
+        card.id = 'card-' + docId;
+        
+        const qrContainer = document.createElement('div');
+        qrContainer.className = 'qr-placeholder';
+        qrContainer.id = 'qr-' + docId;
+        
+        card.appendChild(qrContainer);
+        card.innerHTML += `
+            <h3>${tokenNum}</h3>
+            <p>ID: ${docId}</p>
+            <div class="action-btns">
+                <button class="btn-action btn-download" onclick="downloadQR('${docId}', '${tokenNum}')">Download</button>
+                <button class="btn-action btn-delete" onclick="document.getElementById('card-${docId}').remove()">Delete</button>
+            </div>
+        `;
+
+        grid.prepend(card);
+
+        // Generate QR
+        new QRCode(document.getElementById('qr-' + docId), {
+            text: docId,
+            width: 160,
+            height: 160,
+            colorDark : "#0a2e1f",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+
+        // Clear inputs
+        document.getElementById('docId').value = '';
+        document.getElementById('tokenNum').value = '';
+    }
+
+    function downloadQR(docId, tokenNum) {
+        // Find the image generated by QRCode.js
+        const container = document.getElementById('qr-' + docId);
+        const img = container.querySelector('img');
+        const canvas = container.querySelector('canvas');
+
+        const link = document.createElement('a');
+        link.download = `QueueLK_${tokenNum}.png`;
+        
+        // Use image src if available, otherwise canvas
+        link.href = img ? img.src : canvas.toDataURL("image/png");
+        link.click();
+    }
+
+    // Auto-load sample data
+    window.onload = () => {
+        const samples = [
+            { id: 'token_1', num: 'L001' },
+            { id: 'token_2', num: 'L002' }
+        ];
+        samples.forEach(s => {
+            document.getElementById('docId').value = s.id;
+            document.getElementById('tokenNum').value = s.num;
+            addNewToken();
+        });
+    };
+</script>
+
+</body>
+</html>
