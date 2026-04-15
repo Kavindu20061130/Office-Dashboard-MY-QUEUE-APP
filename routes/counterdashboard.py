@@ -6,8 +6,6 @@ import pytz
 
 counterdashboard = Blueprint("counterdashboard", __name__)
 
-
-
 def get_document_id_from_ref(ref):
     if isinstance(ref, DocumentReference):
         return ref.id
@@ -19,6 +17,30 @@ def get_ref_path(ref):
     if isinstance(ref, DocumentReference):
         return ref.path
     return str(ref).lstrip('/')
+
+def is_counter_active(counter_ref):
+    """Check if counter is active"""
+    try:
+        counter_id = get_document_id_from_ref(counter_ref)
+        counter_doc = db.collection("COUNTERS").document(counter_id).get()
+        if counter_doc.exists:
+            status = counter_doc.to_dict().get("status", "inactive")
+            return status.lower() == "active"
+        return False
+    except Exception:
+        return False
+
+def is_queue_active(queue_ref):
+    """Check if queue is active"""
+    try:
+        queue_id = get_document_id_from_ref(queue_ref)
+        queue_doc = db.collection("QUEUES").document(queue_id).get()
+        if queue_doc.exists:
+            status = queue_doc.to_dict().get("status", "inactive")
+            return status.lower() == "active"
+        return False
+    except Exception:
+        return False
 
 @counterdashboard.route("/counterdashboard")
 def counter_dashboard_home():
@@ -45,11 +67,17 @@ def api_current_counter():
         office_id = get_document_id_from_ref(office_ref)
         counter_doc = db.collection("COUNTERS").document(counter_id).get()
         office_doc = db.collection("OFFICES").document(office_id).get()
+        
+        # Get counter status
+        counter_status = counter_doc.to_dict().get("status", "inactive")
+        
         queue_query = db.collection("QUEUES").where("counterId", "==", counter_ref).limit(1).stream()
         queue_doc = next(queue_query, None)
+        
         return jsonify({
             "counterId": counter_id,
             "counterName": counter_doc.to_dict().get("name", ""),
+            "counterStatus": counter_status,
             "queueId": queue_doc.id if queue_doc else "",
             "queueName": queue_doc.to_dict().get("name", "") if queue_doc else "",
             "officeId": office_id,
@@ -66,7 +94,6 @@ def get_data():
     if not session.get("user_id") or session.get("role") != "counter":
         return jsonify({"error": "Unauthorized"}), 401
     
-    # Disable caching
     response_headers = {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
@@ -86,45 +113,66 @@ def get_data():
         counter_doc = db.collection("COUNTERS").document(counter_id).get()
         office_doc = db.collection("OFFICES").document(office_id).get()
         
+        # Check counter status first (priority over queue)
+        counter_status = counter_doc.to_dict().get("status", "inactive")
+        
+        # If counter is inactive, return immediately
+        if counter_status.lower() == "inactive":
+            return jsonify({
+                "hasCounter": True,
+                "counterInactive": True,
+                "officeName": office_doc.to_dict().get("name", ""),
+                "counterName": counter_doc.to_dict().get("name", ""),
+                "counterStatus": "inactive",
+                "queueName": None,
+                "tokens": [],
+                "message": "Counter is currently inactive. Please contact your administrator.",
+                "lastUpdate": datetime.now().timestamp()
+            }), 200, response_headers
+        
         # Check if queue exists for this counter
         queue_doc = next(db.collection("QUEUES").where("counterId", "==", counter_ref).limit(1).stream(), None)
         
-        # If no queue assigned, return special status with message
         if not queue_doc:
             return jsonify({
+                "hasCounter": True,
+                "counterInactive": False,
                 "hasQueue": False,
                 "queueInactive": True,
                 "officeName": office_doc.to_dict().get("name", ""),
                 "counterName": counter_doc.to_dict().get("name", ""),
+                "counterStatus": "active",
                 "queueName": None,
                 "tokens": [],
                 "message": "No queue has been assigned to this counter yet. Please contact your administrator.",
                 "lastUpdate": datetime.now().timestamp()
             }), 200, response_headers
         
-        # Check if queue is active/inactive
+        # Check queue status
         queue_data = queue_doc.to_dict()
-        queue_status = queue_data.get("status", "inactive")  # Default to inactive if status not set
+        queue_status = queue_data.get("status", "inactive")
         queue_name = queue_data.get("name", "")
         
-        # If queue status is inactive, don't display any data
         if queue_status.lower() == "inactive":
             return jsonify({
+                "hasCounter": True,
+                "counterInactive": False,
                 "hasQueue": True,
                 "queueInactive": True,
                 "officeName": office_doc.to_dict().get("name", ""),
                 "counterName": counter_doc.to_dict().get("name", ""),
+                "counterStatus": "active",
                 "queueName": queue_name,
                 "tokens": [],
                 "message": "This queue is currently inactive. Tokens cannot be served at this time.",
                 "lastUpdate": datetime.now().timestamp()
             }), 200, response_headers
         
-        # Queue exists and is active - proceed normally
+        # Both counter and queue are active - proceed normally
         queue_ref = queue_doc.reference
         queue_path = get_ref_path(queue_ref)
 
-        # Fetch tokens by queueId (both reference and string for compatibility)
+        # Fetch tokens
         tokens_ref = []
         tokens_str = []
         try:
@@ -163,7 +211,6 @@ def get_data():
             if data.get("status") == "served":
                 continue
 
-            # Service name
             service_ref = data.get("serviceId") or data.get("serviceid")
             service_name = ""
             if service_ref:
@@ -176,7 +223,6 @@ def get_data():
             if position is None:
                 position = 9999
 
-            # Convert bookedtime to seconds
             booked_ts = None
             if booked:
                 if hasattr(booked, 'timestamp'):
@@ -184,7 +230,6 @@ def get_data():
                 else:
                     booked_ts = booked.timestamp() if hasattr(booked, 'timestamp') else None
 
-            # Convert arrivedtime to seconds
             arrived = data.get("arrivedtime")
             arrived_ts = None
             if arrived:
@@ -206,10 +251,13 @@ def get_data():
         tokens.sort(key=lambda x: x["position"])
         
         return jsonify({
+            "hasCounter": True,
+            "counterInactive": False,
             "hasQueue": True,
             "queueInactive": False,
             "officeName": office_doc.to_dict().get("name", ""),
             "counterName": counter_doc.to_dict().get("name", ""),
+            "counterStatus": "active",
             "queueName": queue_name,
             "tokens": tokens,
             "lastUpdate": datetime.now().timestamp()
@@ -219,28 +267,52 @@ def get_data():
         return jsonify({"error": str(e)}), 500, response_headers
 
 # ---------------------------
-# Actions
+# Helper function to check operation permissions
+# ---------------------------
+def check_operation_permission(token_id):
+    """Check if operation is allowed (counter and queue must be active)"""
+    # Get token's queue
+    token_doc = db.collection("TOKENS").document(token_id).get()
+    if not token_doc.exists:
+        return False, "Token not found"
+    
+    token_data = token_doc.to_dict()
+    queue_ref = token_data.get("queueId")
+    
+    if not queue_ref:
+        return False, "No queue associated with token"
+    
+    # Get queue's counter
+    queue_id = get_document_id_from_ref(queue_ref)
+    queue_doc = db.collection("QUEUES").document(queue_id).get()
+    if not queue_doc.exists:
+        return False, "Queue not found"
+    
+    queue_data = queue_doc.to_dict()
+    counter_ref = queue_data.get("counterId")
+    
+    if not counter_ref:
+        return False, "No counter associated with queue"
+    
+    # Check if counter is active
+    if not is_counter_active(counter_ref):
+        return False, "Counter is currently inactive. Operation not allowed."
+    
+    # Check if queue is active
+    if not is_queue_active(queue_ref):
+        return False, "Queue is currently inactive. Operation not allowed."
+    
+    return True, "OK"
+
+# ---------------------------
+# Actions with counter status check
 # ---------------------------
 @counterdashboard.route("/counterdashboard/api/serve/<token_id>", methods=["POST"])
 def serve_token(token_id):
-    # Check if queue is active before allowing serve action
     try:
-        # Get the token's queue info
-        token_doc = db.collection("TOKENS").document(token_id).get()
-        if not token_doc.exists:
-            return jsonify({"error": "Token not found"}), 404
-        
-        token_data = token_doc.to_dict()
-        queue_ref = token_data.get("queueId")
-        
-        if queue_ref:
-            # Get queue document to check status
-            queue_id = get_document_id_from_ref(queue_ref)
-            queue_doc = db.collection("QUEUES").document(queue_id).get()
-            if queue_doc.exists:
-                queue_status = queue_doc.to_dict().get("status", "inactive")
-                if queue_status.lower() == "inactive":
-                    return jsonify({"error": "Cannot serve token: Queue is inactive"}), 403
+        allowed, message = check_operation_permission(token_id)
+        if not allowed:
+            return jsonify({"error": message}), 403
         
         db.collection("TOKENS").document(token_id).update({
             "status": "served",
@@ -252,24 +324,10 @@ def serve_token(token_id):
 
 @counterdashboard.route("/counterdashboard/api/skip/<token_id>", methods=["POST"])
 def skip_token(token_id):
-    # Check if queue is active before allowing skip action
     try:
-        # Get the token's queue info
-        token_doc = db.collection("TOKENS").document(token_id).get()
-        if not token_doc.exists:
-            return jsonify({"error": "Token not found"}), 404
-        
-        token_data = token_doc.to_dict()
-        queue_ref = token_data.get("queueId")
-        
-        if queue_ref:
-            # Get queue document to check status
-            queue_id = get_document_id_from_ref(queue_ref)
-            queue_doc = db.collection("QUEUES").document(queue_id).get()
-            if queue_doc.exists:
-                queue_status = queue_doc.to_dict().get("status", "inactive")
-                if queue_status.lower() == "inactive":
-                    return jsonify({"error": "Cannot skip token: Queue is inactive"}), 403
+        allowed, message = check_operation_permission(token_id)
+        if not allowed:
+            return jsonify({"error": message}), 403
         
         db.collection("TOKENS").document(token_id).update({"status": "skipped"})
         return jsonify({"success": True})
@@ -278,25 +336,10 @@ def skip_token(token_id):
 
 @counterdashboard.route("/counterdashboard/api/arrive/<token_id>", methods=["POST"])
 def set_arrived_time(token_id):
-    """Set a custom arrival time (Unix timestamp in seconds)"""
-    # Check if queue is active before allowing arrive action
     try:
-        # Get the token's queue info
-        token_doc = db.collection("TOKENS").document(token_id).get()
-        if not token_doc.exists:
-            return jsonify({"error": "Token not found"}), 404
-        
-        token_data = token_doc.to_dict()
-        queue_ref = token_data.get("queueId")
-        
-        if queue_ref:
-            # Get queue document to check status
-            queue_id = get_document_id_from_ref(queue_ref)
-            queue_doc = db.collection("QUEUES").document(queue_id).get()
-            if queue_doc.exists:
-                queue_status = queue_doc.to_dict().get("status", "inactive")
-                if queue_status.lower() == "inactive":
-                    return jsonify({"error": "Cannot set arrival time: Queue is inactive"}), 403
+        allowed, message = check_operation_permission(token_id)
+        if not allowed:
+            return jsonify({"error": message}), 403
         
         data = request.get_json()
         if not data or "arrivedtime" not in data:
