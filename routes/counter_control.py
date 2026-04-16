@@ -26,11 +26,27 @@ def get_today_range_utc():
     today_end = datetime(now.year, now.month, now.day, 23, 59, 59, 999999, tzinfo=tz)
     return today_start.astimezone(timezone.utc), today_end.astimezone(timezone.utc)
 
+# ------------------- PAGE ROUTE (FIXED: passes office data to template) -------------------
 @counter_control.route('/counter-control')
 def counter_control_page():
     if not is_admin():
         return redirect(url_for('login.index'))
-    return render_template('countercontrol.html')
+    
+    # Get office details for sidebar display
+    office_id = get_admin_office()
+    office_name = None
+    office_data = None
+    
+    if office_id:
+        office_doc = db.collection('OFFICES').document(office_id).get()
+        if office_doc.exists:
+            office_data = office_doc.to_dict()
+            office_name = office_data.get('name')
+    
+    return render_template('countercontrol.html', 
+                         office_id=office_id,
+                         office_name=office_name,
+                         office_data=office_data)
 
 # ------------------- API: Get counters for this admin's office -------------------
 @counter_control.route('/api/counters')
@@ -49,6 +65,9 @@ def api_get_counters():
         result = []
         for doc in counters:
             data = doc.to_dict()
+            # Skip archived counters if you want
+            if data.get('status') == 'archived':
+                continue
             result.append({
                 'id': doc.id,
                 'name': data.get('name', 'Unnamed'),
@@ -56,6 +75,52 @@ def api_get_counters():
                 'officeId': office_id
             })
         return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ------------------- API: Create new counter (NEW) -------------------
+@counter_control.route('/api/counter/create', methods=['POST'])
+def api_create_counter():
+    if not is_admin():
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        counter_name = data.get('name', '').strip()
+        office_id = get_admin_office()
+        
+        if not counter_name:
+            return jsonify({'error': 'Counter name is required'}), 400
+        
+        if not office_id:
+            return jsonify({'error': 'No office assigned to admin'}), 400
+        
+        office_ref = db.collection('OFFICES').document(office_id)
+        
+        # Check for duplicate counter name in same office
+        existing_counters = db.collection('COUNTERS').where('officeId', '==', office_ref).where('name', '==', counter_name).stream()
+        if any(existing_counters):
+            return jsonify({'error': f'A counter named "{counter_name}" already exists in your office'}), 400
+        
+        # Create the counter
+        counter_ref = db.collection('COUNTERS').add({
+            'name': counter_name,
+            'status': 'inactive',
+            'officeId': office_ref,
+            'createdAt': SERVER_TIMESTAMP,
+            'createdBy': session.get('user_id'),
+            'createdByEmail': session.get('email')
+        })
+        
+        counter_id = counter_ref[1].id
+        
+        return jsonify({
+            'success': True,
+            'counterId': counter_id,
+            'counterName': counter_name,
+            'message': f'Counter "{counter_name}" created successfully'
+        }), 201
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -207,7 +272,7 @@ def api_set_arrival(token_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ------------------- Complete counter (clear today's tokens) -------------------
+# ------------------- Complete counter (clear today's waiting/skipped tokens) -------------------
 @counter_control.route('/api/counter/<counter_id>/complete', methods=['POST'])
 def api_complete_counter(counter_id):
     if not is_admin():

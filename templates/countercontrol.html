@@ -16,9 +16,17 @@
         <span class="current">Counter Control</span>
     </div>
 
+    <!-- Page Header – Card background + Queue Management layout -->
     <div class="page-header">
-        <h1><i class="fas fa-tachometer-alt"></i> Counter Control</h1>
-        <p>Manage counters, their status, and all associated tokens for your office</p>
+        <div class="header-card">
+            <div class="header-row">
+                <h1>Counter Control</h1>
+                <a href="{{ url_for('createcounterstaff.create_staff_page') }}" class="btn-add-queue">
+                    <i class="fa-solid fa-plus"></i> Add New Counter
+                </a>
+            </div>
+            <p>Manage counters, their status, and all associated tokens for your office</p>
+        </div>
     </div>
 
     <div class="control-layout">
@@ -71,7 +79,7 @@
                             <span id="statusText" class="status-text">Inactive</span>
                         </label>
                         
-                        <!-- ACTION BUTTONS - These will be visible when a counter is selected -->
+                        <!-- ACTION BUTTONS -->
                         <div class="action-buttons">
                             <button class="btn btn-outline" id="refreshTokensBtn">
                                 <i class="fas fa-sync-alt"></i> Refresh
@@ -144,6 +152,25 @@
         <div class="modal-footer confirm-modal-footer">
             <button class="btn btn-secondary" id="cancelConfirmBtn">Cancel</button>
             <button class="btn btn-primary" id="confirmActionBtn">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Create Counter Modal -->
+<div id="createCounterModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus-circle"></i> Create New Counter</h3>
+            <button class="close-modal" id="closeCreateModalBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <label>Counter Name</label>
+            <input type="text" id="counterNameInput" class="modal-input" placeholder="e.g., Counter 1, Service Desk A" autocomplete="off">
+            <small style="display: block; margin-top: 8px; color: #64748b;">Name must be unique within your office.</small>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancelCreateBtn">Cancel</button>
+            <button class="btn btn-primary" id="saveCreateBtn">Create Counter</button>
         </div>
     </div>
 </div>
