@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} - QueueLK Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif;
+            background: white;
+            color: #1e293b;
+            line-height: 1.5;
+        }
+
+        /* ========== FULL-PAGE COVER ========== */
+        .cover {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 100%;
+            background: linear-gradient(135deg, #0a2e1a 0%, #1a5c2e 50%, #0a2e1a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            page-break-after: always;   /* cover always alone */
+            break-inside: avoid;
+        }
+        .cover::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 2px, transparent 2px, transparent 8px);
+            pointer-events: none;
+        }
+        .logo {
+            margin-bottom: 60px;
+            position: relative;
+            z-index: 1;
+        }
+        .logo h1 {
+            font-size: 64px;
+            letter-spacing: 4px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .logo p {
+            font-size: 16px;
+            letter-spacing: 8px;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+        .cover h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        .cover h2 {
+            font-size: 32px;
+            color: #e8f5e9;
+            font-weight: 500;
+            margin-bottom: 40px;
+        }
+        .cover .meta {
+            font-size: 16px;
+            margin-top: 80px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 30px;
+            width: 70%;
+            position: relative;
+            z-index: 1;
+        }
+        .cover .meta p {
+            margin: 5px 0;
+            opacity: 0.9;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .report-content {
+            padding: 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Executive summary */
+        .executive-summary {
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+            padding: 30px;
+            margin: 30px 0;
+            border-radius: 16px;
+            page-break-inside: avoid;
+        }
+        .executive-summary h3 {
+            color: #1e3a8a;
+            font-size: 24px;
+            margin-bottom: 20px;
+            border-left: 4px solid #15803d;
+            padding-left: 15px;
+        }
+
+        /* Stats header */
+        .stats-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            padding: 30px;
+            margin: 30px 0;
+            border-radius: 16px;
+            color: white;
+            page-break-inside: avoid;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            text-align: center;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        /* KPI cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+            page-break-inside: avoid;
+        }
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            border-top: 4px solid #15803d;
+        }
+        .kpi-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #15803d;
+        }
+        .kpi-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 8px;
+            text-transform: uppercase;
+        }
+
+        /* Info bar */
+        .info-bar {
+            background: #e8f5e9;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 12px;
+            border-left: 4px solid #15803d;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            page-break-inside: avoid;
+        }
+
+        /* Section titles */
+        .section-title {
+            font-size: 28px;
+            color: #1e3a8a;
+            border-left: 6px solid #15803d;
+            padding-left: 20px;
+            margin: 40px 0 25px 0;
+            font-weight: 600;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            page-break-inside: avoid;
+        }
+        th {
+            background: #1e3a8a;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        tr:hover td {
+            background: #f1f5f9;
+        }
+        .text-center {
+            text-align: center;
+        }
+
+        /* Charts */
+        .chart-container {
+            margin: 30px 0;
+            text-align: center;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            page-break-inside: avoid;
+        }
+
+        /* No forced page breaks except the cover */
+        .page-break {
+            page-break-before: auto;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        @media print {
+            .cover {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PAGE 1: COVER -->
+<div class="cover">
+    <div class="logo">
+        <h1>QueueLK</h1>
+        <p>SMART QUEUE MANAGEMENT SYSTEM</p>
+    </div>
+    <h1>{{ title }}</h1>
+    <h2>{{ office_name }}</h2>
+    <div class="meta">
+        <p><strong>Report Date:</strong> {{ generated_on }}</p>
+        <p><strong>Report Type:</strong> 
+            {% if report_type == 'daily' %}Daily{% elif report_type == 'weekly' %}Weekly{% else %}Monthly{% endif %} Performance Report
+        </p>
+        <p><strong>Generated By:</strong> QueueLK Automated System</p>
+        <p><strong>Status:</strong> Official Report</p>
+    </div>
+</div>
+
+<!-- PAGE 2+ : MAIN CONTENT -->
+<div class="report-content">
+    <div class="executive-summary">
+        <h3>📊 Executive Summary</h3>
+        <p style="line-height: 1.8; color: #334155;">
+            This report provides a comprehensive analysis of queue management performance for 
+            <strong>{{ office_name }}</strong> during the 
+            {% if report_type == 'daily' %}current day{% elif report_type == 'weekly' %}past week{% else %}past month{% endif %}.
+            The data presented includes token distribution, service efficiency, wait times, and counter utilization metrics.
+        </p>
+    </div>
+
+    {% if report_type == 'daily' %}
+        <!-- DAILY REPORT -->
+        <div class="stats-header">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-label">TOTAL</div><div class="stat-value">{{ data.total_tokens }}</div></div>
+                <div class="stat-card"><div class="stat-label">TOKENS</div><div class="stat-value">{{ data.total_tokens }}</div></div>
+                <div class="stat-card"><div class="stat-label">SERVED</div><div class="stat-value">{{ data.served }}</div></div>
+                <div class="stat-card"><div class="stat-label">WAITING</div><div class="stat-value">{{ data.waiting }}</div></div>
+                <div class="stat-card"><div class="stat-label">ACTIVE</div><div class="stat-value">{{ data.active_counters }}</div></div>
+                <div class="stat-card"><div class="stat-label">COUNTERS</div><div class="stat-value">{{ data.active_counters }}</div></div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value">{% if data.total_tokens > 0 %}{{ (data.served / data.total_tokens * 100)|round(1) }}%{% else %}0%{% endif %}</div>
+                <div class="kpi-label">Service Completion Rate</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">{{ data.active_counters }}</div>
+                <div class="kpi-label">Active Counters</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">{{ data.office_working_duration }}</div>
+                <div class="kpi-label">Operating Hours</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">{{ data.waiting }}</div>
+                <div class="kpi-label">Pending Customers</div>
+            </div>
+        </div>
+
+        <div class="info-bar">
+            <span><strong>🏢 Office Hours:</strong> {{ data.office_working_hours }}</span>
+            <span><strong>⏱️ Working Duration:</strong> {{ data.office_working_duration }}</span>
+            <span><strong>📅 Report Period:</strong> Today</span>
+        </div>
+
+        {% if bar_chart_html %}
+        <div class="chart-container">
+            <h3 style="margin-bottom: 20px; color: #1e3a8a;">Performance Overview</h3>
+            {{ bar_chart_html|safe }}
+        </div>
+        {% endif %}
+
+        <div class="section-title">Queue Breakdown by Service</div>
+        <table>
+            <thead>
+                <tr><th>Service Name</th><th>Queue Name</th><th class="text-center">Served</th><th class="text-center">Waiting</th><th class="text-center">Avg Wait Time</th><th class="text-center">Efficiency</th></tr>
+            </thead>
+            <tbody>
+                {% for q in queue_data %}
+                <tr>
+                    <td><strong>{{ q.service_name }}</strong></td>
+                    <td>{{ q.queue_name }}</td>
+                    <td class="text-center">{{ q.tokens_served }}</td>
+                    <td class="text-center">{{ q.tokens_waiting }}</td>
+                    <td class="text-center">{{ q.avg_wait_time if q.avg_wait_time != 'N/A' else '—' }}</td>
+                    <td class="text-center">
+                        {% if q.tokens_served + q.tokens_waiting > 0 %}
+                            {{ ((q.tokens_served / (q.tokens_served + q.tokens_waiting)) * 100)|round(0) }}%
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center">No queue activity today</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if pie_chart_html %}
+        <div class="chart-container">
+            {{ pie_chart_html|safe }}
+        </div>
+        {% endif %}
+
+    {% elif report_type == 'weekly' %}
+        <!-- WEEKLY REPORT -->
+        <div class="stats-header">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-label">TOTAL SERVED</div><div class="stat-value">{{ total_served }}</div></div>
+                <div class="stat-card"><div class="stat-label">TOTAL WAITING</div><div class="stat-value">{{ total_waiting }}</div></div>
+                <div class="stat-card"><div class="stat-label">AVG DAILY</div><div class="stat-value">{{ avg_daily_served }}</div></div>
+                <div class="stat-card"><div class="stat-label">WEEKLY AVG</div><div class="stat-value">{{ (total_served / 7)|round(0) }}</div></div>
+                <div class="stat-card"><div class="stat-label">EFFICIENCY</div><div class="stat-value">{{ ((total_served / (total_served + total_waiting)) * 100)|round(0) if (total_served + total_waiting) > 0 else 0 }}%</div></div>
+                <div class="stat-card"><div class="stat-label">PEAK DAY</div><div class="stat-value">{% if rows %}{{ rows|sort(attribute='served', reverse=True)|first|attr('day') }}{% else %}—{% endif %}</div></div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-value">{{ total_served }}</div><div class="kpi-label">Total Served</div></div>
+            <div class="kpi-card"><div class="kpi-value">{{ total_waiting }}</div><div class="kpi-label">Total Waiting</div></div>
+            <div class="kpi-card"><div class="kpi-value">{{ ((total_served / (total_served + total_waiting)) * 100)|round(1) if (total_served + total_waiting) > 0 else 0 }}%</div><div class="kpi-label">Overall Efficiency</div></div>
+            <div class="kpi-card"><div class="kpi-value">{{ avg_daily_served }}</div><div class="kpi-label">Daily Average</div></div>
+        </div>
+
+        {% if chart_html %}
+        <div class="chart-container">
+            <h3 style="margin-bottom: 20px; color: #1e3a8a;">Weekly Performance Trend</h3>
+            {{ chart_html|safe }}
+        </div>
+        {% endif %}
+
+        <div class="section-title">Daily Performance Breakdown</div>
+        <table>
+            <thead><tr><th>Day</th><th class="text-center">Served</th><th class="text-center">Waiting</th><th class="text-center">Active Counters</th><th class="text-center">Working Hours</th><th class="text-center">Efficiency</th></tr></thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td><strong>{{ row.day }}</strong></td>
+                    <td class="text-center">{{ row.served }}</td>
+                    <td class="text-center">{{ row.waiting }}</td>
+                    <td class="text-center">{{ row.active }}</td>
+                    <td class="text-center">{{ row.working_hours }}</td>
+                    <td class="text-center">{% if row.served + row.waiting > 0 %}{{ ((row.served / (row.served + row.waiting)) * 100)|round(0) }}%{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="section-title">Queue Summary (Last 7 Days)</div>
+        <table>
+            <thead><tr><th>Service Name</th><th class="text-center">Total Served</th><th class="text-center">Total Waiting</th><th class="text-center">Avg Wait Time</th><th class="text-center">Service Rate</th></tr></thead>
+            <tbody>
+                {% for q in queue_summary %}
+                <tr>
+                    <td><strong>{{ q.service_name }}</strong></td>
+                    <td class="text-center">{{ q.served }}</td>
+                    <td class="text-center">{{ q.waiting }}</td>
+                    <td class="text-center">{{ q.avg_wait_time if q.avg_wait_time != 'N/A' else '—' }}</td>
+                    <td class="text-center">{% if q.served + q.waiting > 0 %}{{ ((q.served / (q.served + q.waiting)) * 100)|round(0) }}%{% else %}—{% endif %}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center">No queue data for this week</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% elif report_type == 'monthly' %}
+        <!-- MONTHLY REPORT -->
+        <div class="stats-header">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-label">TOTAL SERVED</div><div class="stat-value">{{ total_served }}</div></div>
+                <div class="stat-card"><div class="stat-label">TOTAL WAITING</div><div class="stat-value">{{ total_waiting }}</div></div>
+                <div class="stat-card"><div class="stat-label">AVG DAILY</div><div class="stat-value">{{ avg_daily_served }}</div></div>
+                <div class="stat-card"><div class="stat-label">MONTH TOTAL</div><div class="stat-value">{{ total_served + total_waiting }}</div></div>
+                <div class="stat-card"><div class="stat-label">EFFICIENCY</div><div class="stat-value">{{ ((total_served / (total_served + total_waiting)) * 100)|round(0) if (total_served + total_waiting) > 0 else 0 }}%</div></div>
+                <div class="stat-card"><div class="stat-label">BUSIEST DAY</div><div class="stat-value">{% if rows %}{{ rows|sort(attribute='served', reverse=True)|first|attr('date') }}{% else %}—{% endif %}</div></div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-value">{{ total_served }}</div><div class="kpi-label">Monthly Served</div></div>
+            <div class="kpi-card"><div class="kpi-value">{{ ((total_served / (total_served + total_waiting)) * 100)|round(1) if (total_served + total_waiting) > 0 else 0 }}%</div><div class="kpi-label">Success Rate</div></div>
+            <div class="kpi-card"><div class="kpi-value">{{ avg_daily_served }}</div><div class="kpi-label">Daily Average</div></div>
+            <div class="kpi-card"><div class="kpi-value">{{ total_waiting }}</div><div class="kpi-label">Pending Total</div></div>
+        </div>
+
+        {% if chart_html %}
+        <div class="chart-container">
+            <h3 style="margin-bottom: 20px; color: #1e3a8a;">Monthly Performance Overview</h3>
+            {{ chart_html|safe }}
+        </div>
+        {% endif %}
+
+        <div class="section-title">Daily Performance (Last 30 Days)</div>
+        <table>
+            <thead><tr><th>Date</th><th class="text-center">Served</th><th class="text-center">Waiting</th><th class="text-center">Active Counters</th><th class="text-center">Working Hours</th><th class="text-center">Efficiency</th></tr></thead>
+            <tbody>
+                {% for row in rows[-20:] %}
+                <tr>
+                    <td><strong>{{ row.date }}</strong></td>
+                    <td class="text-center">{{ row.served }}</td>
+                    <td class="text-center">{{ row.waiting }}</td>
+                    <td class="text-center">{{ row.active }}</td>
+                    <td class="text-center">{{ row.working_hours }}</td>
+                    <td class="text-center">{% if row.served + row.waiting > 0 %}{{ ((row.served / (row.served + row.waiting)) * 100)|round(0) }}%{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="section-title">Queue Summary (Last 30 Days)</div>
+        </table>
+            <thead><tr><th>Service Name</th><th class="text-center">Total Served</th><th class="text-center">Total Waiting</th><th class="text-center">Avg Wait Time</th><th class="text-center">Service Rate</th></tr></thead>
+            <tbody>
+                {% for q in queue_summary %}
+                <tr>
+                    <td><strong>{{ q.service_name }}</strong></td>
+                    <td class="text-center">{{ q.served }}</td>
+                    <td class="text-center">{{ q.waiting }}</td>
+                    <td class="text-center">{{ q.avg_wait_time if q.avg_wait_time != 'N/A' else '—' }}</td>
+                    <td class="text-center">{% if q.served + q.waiting > 0 %}{{ ((q.served / (q.served + q.waiting)) * 100)|round(0) }}%{% else %}—{% endif %}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center">No queue data for this month</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <!-- INSIGHTS & RECOMMENDATIONS (always on a new page, but without extra blank) -->
+    <div style="page-break-before: avoid; margin-top: 60px;">
+        <div class="section-title">📈 Performance Insights & Recommendations</div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card"><div class="kpi-label">Peak Hour Analysis</div><div class="kpi-value" style="font-size: 18px;">Based on Token Distribution</div></div>
+            <div class="kpi-card">
+                <div class="kpi-label">Service Efficiency</div>
+                <div class="kpi-value" style="font-size: 18px;">
+                    {% if report_type == 'daily' %}
+                        {% if data.served + data.waiting > 0 %}{{ ((data.served / (data.served + data.waiting)) * 100)|round(0) }}%{% else %}N/A{% endif %}
+                    {% elif report_type == 'weekly' %}
+                        {{ ((total_served / (total_served + total_waiting)) * 100)|round(0) if (total_served + total_waiting) > 0 else 0 }}%
+                    {% else %}
+                        {{ ((total_served / (total_served + total_waiting)) * 100)|round(0) if (total_served + total_waiting) > 0 else 0 }}%
+                    {% endif %}
+                </div>
+            </div>
+            <div class="kpi-card"><div class="kpi-label">Recommendation</div><div class="kpi-value" style="font-size: 18px;">{% if queue_data|length > 0 %}Optimize Queues{% else %}Monitor Activity{% endif %}</div></div>
+            <div class="kpi-card"><div class="kpi-label">Next Review</div><div class="kpi-value" style="font-size: 18px;">{% if report_type == 'daily' %}Tomorrow{% elif report_type == 'weekly' %}Next Week{% else %}Next Month{% endif %}</div></div>
+        </div>
+
+        <div class="executive-summary">
+            <h3>📝 Recommendations</h3>
+            <ul style="margin-left: 20px; line-height: 1.8; color: #334155;">
+                {% if report_type == 'daily' %}
+                    {% if data.waiting > data.served %}
+                        <li>Consider opening additional counters during peak hours to reduce wait times.</li>
+                        <li>Review queue distribution for services with higher waiting times.</li>
+                    {% else %}
+                        <li>Current operations are running efficiently. Continue monitoring service levels.</li>
+                        <li>Maintain current counter allocation for optimal performance.</li>
+                    {% endif %}
+                    <li>Average wait time should be monitored to ensure customer satisfaction.</li>
+                {% elif report_type == 'weekly' %}
+                    <li>Analyze daily patterns to identify peak days for better resource allocation.</li>
+                    <li>Consider implementing appointment system for services with consistently high demand.</li>
+                    <li>Review counter staffing levels on days with higher than average token volume.</li>
+                {% else %}
+                    <li>Review monthly trends to forecast resource requirements for upcoming months.</li>
+                    <li>Identify services with highest wait times for process improvement.</li>
+                    <li>Consider digital queue management enhancements for better customer experience.</li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <div class="executive-summary" style="margin-top: 20px;">
+            <h3>📋 Report Notes</h3>
+            <ul style="margin-left: 20px; line-height: 1.8; color: #334155;">
+                <li>This report is auto-generated by QueueLK Smart Queue Management System.</li>
+                <li>Data accuracy depends on real-time token and counter status updates.</li>
+                <li>Wait times are calculated based on token booking to service completion.</li>
+                <li>For any discrepancies, please contact system administrator.</li>
+                <li>Next scheduled report: 
+                    {% if report_type == 'daily' %}Tomorrow at same time{% elif report_type == 'weekly' %}Next Monday{% else %}Next month on 1st day{% endif %}
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer">
+        QueueLK · Smart Queue Management System · Report generated on {{ generated_on }}<br>
+        This is an official system-generated report · Version 2.0
+    </div>
+</div>
+</body>
+</html>
