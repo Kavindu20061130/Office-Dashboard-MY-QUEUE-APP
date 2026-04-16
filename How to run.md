@@ -46,6 +46,7 @@ python -m venv .venv
 Step 5 - Activate virtual environment
 .venv\Scripts\activate
 
+
 Step 6 - Install dependencies
 pip install -r requirements.txt
 

@@ -8,7 +8,7 @@
 
 {% block content %}
 
-<!-- HEADER -->
+<!-- HEADER (unchanged) -->
 <div class="header-card">
     <div class="header-left">
         <h1 id="greeting-title">Loading...</h1>
@@ -17,7 +17,6 @@
             <span class="live-time-pill" id="live-clock"></span>
         </div>
     </div>
-
     <div class="header-right">
         <div id="status-container">
             <div id="status-btn" class="status-badge">
@@ -25,7 +24,6 @@
                 <span id="status-text">Loading...</span>
             </div>
         </div>
-
         <a href="/logout" class="logout-btn">
             <i class="fa-solid fa-power-off"></i> Logout
         </a>
@@ -36,107 +34,53 @@
 
     <!-- Stats Cards -->
     <div class="stats-container">
-
-        <div class="card">
-            <div class="card-top">
-                <p>Tokens Today</p>
-                <div class="icon red"><i class="fa-solid fa-ticket"></i></div>
-            </div>
-            <h2>{{ tokens_today }}</h2>
-        </div>
-
-        <div class="card">
-            <div class="card-top">
-                <p>Waiting</p>
-                <div class="icon blue"><i class="fa-solid fa-users"></i></div>
-            </div>
-            <h2>{{ waiting_count }}</h2>
-        </div>
-
-        <div class="card">
-            <div class="card-top">
-                <p>Served</p>
-                <div class="icon green"><i class="fa-solid fa-check"></i></div>
-            </div>
-            <h2>{{ served_count }}</h2>
-        </div>
-
-        <div class="card">
-            <div class="card-top">
-                <p>Counters</p>
-                <div class="icon purple"><i class="fa-solid fa-desktop"></i></div>
-            </div>
-            <h2>{{ counters_count }}</h2>
-        </div>
-
+        <div class="card"><div class="card-top"><p>Tokens Today</p><div class="icon red"><i class="fa-solid fa-ticket"></i></div></div><h2 id="tokens-today">0</h2></div>
+        <div class="card"><div class="card-top"><p>Waiting</p><div class="icon blue"><i class="fa-solid fa-users"></i></div></div><h2 id="waiting-count">0</h2></div>
+        <div class="card"><div class="card-top"><p>Served</p><div class="icon green"><i class="fa-solid fa-check"></i></div></div><h2 id="served-count">0</h2></div>
+        <div class="card"><div class="card-top"><p>Counters</p><div class="icon purple"><i class="fa-solid fa-desktop"></i></div></div><h2 id="counters-count">0</h2></div>
     </div>
 
-    <!-- Queue Section -->
+    <!-- Queue Section with Search & Refresh -->
     <div class="queue-section">
         <div class="queue-header">
-            <div>
-                <button class="tab active">
-                    All Queues ({{ queues|length if queues else 0 }})
-                </button>
-                <button class="tab">Active (0)</button>
-                <button class="tab">Paused (0)</button>
+            <div class="tabs-group">
+                <button class="tab active" data-filter="all">All Queues (<span id="all-count">0</span>)</button>
+                <button class="tab" data-filter="active">Active (<span id="active-count">0</span>)</button>
+                <button class="tab" data-filter="inactive">Inactive (<span id="inactive-count">0</span>)</button>
             </div>
-
-            <a href="{{ url_for('createqueue.create_queue_page') }}" class="create-btn">
-                <i class="fa-solid fa-plus"></i> Create New Queue
-            </a>
+            <div class="queue-actions">
+                <div class="search-wrapper">
+                    <input type="text" id="queue-search" placeholder="Search queue..." class="search-input">
+                    <button id="search-btn" class="search-icon-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+                <button id="manual-refresh-btn" class="refresh-btn"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+                <a href="{{ url_for('createqueue.create_queue_page') }}" class="create-btn">
+                    <i class="fa-solid fa-plus"></i> Create New Queue
+                </a>
+            </div>
         </div>
 
-        {% if queues and queues|length > 0 %}
-        <table class="queue-table">
-            <thead>
-                <tr>
-                    <th>Queue Name</th>
-                    <th>Service</th>
-                    <th>Counters</th>
-                    <th>Daily Limit</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for q in queues %}
-                <tr>
-                    <td>{{ q.name }}</td>
-                    <td>{{ q.service }}</td>
-                    <td>{{ q.counters }}</td>
-                    <td>{{ q.limit }}</td>
-                    <td>
-                        <span class="status {{ q.status }}">
-                            {{ q.status }}
-                        </span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="empty-state">
-            <i class="fa-solid fa-layer-group"></i>
-            <p>No queues found. Create your first queue to get started.</p>
+        <!-- Queue container: will be filled by JS with Lottie loading -->
+        <div id="queue-table-container">
+            <div class="loading-animation">
+                <dotlottie-wc src="https://lottie.host/6f8832dc-2f7e-431f-ac9e-62106e5cfc1e/Ve1fxiZCLe.lottie" style="width: 200px; height: 200px;" autoplay loop></dotlottie-wc>
+                <p>Loading queues...</p>
+            </div>
         </div>
-        {% endif %}
     </div>
-
 </div>
 
-<!-- MODAL -->
+<!-- MODAL (unchanged) -->
 <div id="office-modal" class="modal-overlay">
     <div class="modal-box">
         <h2>Office Hours</h2>
-        <div class="time-row">
-            <span>Opening Time:</span>
-            <strong id="modal-open-time"></strong>
+        <div class="time-row"><span>Opening Time:</span><input type="time" id="modal-open-time-input" step="60"></div>
+        <div class="time-row"><span>Closing Time:</span><input type="time" id="modal-close-time-input" step="60"></div>
+        <div class="modal-buttons">
+            <button id="save-hours-btn" class="save-btn">Save Changes</button>
+            <button id="close-modal" class="close-modal-btn">Cancel</button>
         </div>
-        <div class="time-row">
-            <span>Closing Time:</span>
-            <strong id="modal-close-time"></strong>
-        </div>
-        <button id="close-modal" class="close-btn">Close</button>
+        <div id="modal-message"></div>
     </div>
 </div>
 
@@ -145,7 +89,6 @@
     const OPEN_TIME = "{{ open_time or '' }}";
     const CLOSE_TIME = "{{ close_time or '' }}";
 </script>
-
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.10/dist/dotlottie-wc.js" type="module"></script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-
 {% endblock %}
