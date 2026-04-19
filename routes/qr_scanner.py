@@ -61,13 +61,24 @@ def set_arrival_time(token_ref, now_utc):
     })
 
 # ---------------------------
-# Page route
+# Page route (FIXED: passes office details to sidebar)
 # ---------------------------
 @qr_scanner.route("/admin/scanner")
 def scanner_page():
     if not session.get("user_id") or session.get("role") not in ["admin", "operator"]:
         return "Unauthorized", 401
-    return render_template("scanner.html")
+
+    # Get office details for sidebar
+    office_id = get_admin_office_id()
+    office_name = None
+    if office_id:
+        office_doc = db.collection("OFFICES").document(office_id).get()
+        if office_doc.exists:
+            office_name = office_doc.to_dict().get("name")
+
+    return render_template("scanner.html",
+                           office_name=office_name,
+                           office_id=office_id)
 
 # ---------------------------
 # Get token info (no modification)
@@ -87,7 +98,6 @@ def token_info(token_id):
     token_office_id = office_ref.id if hasattr(office_ref, 'id') else get_doc_id(office_ref)
     admin_office_id = get_admin_office_id()
     if token_office_id != admin_office_id:
-        # CHANGED ERROR MESSAGE
         return jsonify({"error": "failed due to QR is Wrong"}), 403
 
     arrival_ts = get_arrival_time(token_data)
@@ -141,7 +151,6 @@ def qr_arrive():
     token_office_id = office_ref.id if hasattr(office_ref, 'id') else get_doc_id(office_ref)
     admin_office_id = get_admin_office_id()
     if token_office_id != admin_office_id:
-        # CHANGED ERROR MESSAGE
         return jsonify({"error": "failed due to QR is Wrong"}), 403
 
     if token_data.get("status") == "served":
@@ -209,7 +218,6 @@ def qr_serve():
     token_office_id = office_ref.id if hasattr(office_ref, 'id') else get_doc_id(office_ref)
     admin_office_id = get_admin_office_id()
     if token_office_id != admin_office_id:
-        # CHANGED ERROR MESSAGE
         return jsonify({"error": "failed due to QR is Wrong"}), 403
 
     if token_data.get("status") == "served":

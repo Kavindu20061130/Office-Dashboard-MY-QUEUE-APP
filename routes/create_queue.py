@@ -53,6 +53,13 @@ def create_queue_page():
         return redirect(url_for("dashboard.dashboard_home"))
 
     office_ref = db.collection("OFFICES").document(office_id)
+    
+    # ===== FIX: Get office details for sidebar =====
+    office_doc = office_ref.get()
+    office_name = None
+    if office_doc.exists:
+        office_name = office_doc.to_dict().get("name")
+    # =============================================
 
     if request.method == "GET":
         # Get success data from session if exists
@@ -80,11 +87,15 @@ def create_queue_page():
             })
 
         letters = [chr(i) for i in range(ord('A'), ord('Z')+1)]
+        
+        # ===== FIX: Pass office_name and office_id to template =====
         return render_template("create_queue.html",
                                services=services,
                                counters=counters,
                                letters=letters,
-                               success_data=success_data)
+                               success_data=success_data,
+                               office_name=office_name,
+                               office_id=office_id)
 
     # ---------- POST: create queue(s) ----------
     try:

@@ -1,206 +1,103 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QueueLK | Create Queue</title>
+{% extends "base.html" %}
 
-  <!-- Favicon -->
-  <link rel="icon"       type="image/png" href="{{ url_for('static', filename='images/logo1.png') }}">
-  <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='images/logo1.png') }}">
+{% block title %}Create Queue | QueueLK{% endblock %}
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/createqueue.css') }}">
+{% endblock %}
 
-  <!-- Stylesheet -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/createqueue.css') }}">
-</head>
-<body>
+{% block content %}
 
-<!-- ══════════════════════════════════════════
-     IMAGE BACKGROUND
-══════════════════════════════════════════ -->
-<div class="image-bg">
-  <img src="{{ url_for('static', filename='images/imagebackground.png') }}" alt="">
-  <div class="img-overlay"></div>
-</div>
-
-<!-- ══════════════════════════════════════════
-     TOP NAV
-══════════════════════════════════════════ -->
-<nav class="topnav">
-  <div class="topnav-brand">
-    <img src="{{ url_for('static', filename='images/logo3.png') }}" alt="QueueLK Logo" class="nav-logo">
-    <span>QueueLK<em> Admin</em></span>
+<!-- ========== PAGE HEADER (like dashboard) ========== -->
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{{ url_for('dashboard.dashboard_home') }}" class="breadcrumb-link">Dashboard</a>
+    <span class="breadcrumb-separator">></span>
+    <span class="breadcrumb-current">Create Queue & Service</span>
   </div>
-  <div class="topnav-actions">
-    <a href="{{ url_for('dashboard.dashboard_home') }}" class="tnav-btn back-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-        <polyline points="15 18 9 12 15 6"/>
-      </svg>
-      Back to Dashboard
-    </a>
-    <a href="{{ url_for('login.logout') }}" class="tnav-btn logout-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-        <polyline points="16 17 21 12 16 7"/>
-        <line x1="21" y1="12" x2="9" y2="12"/>
-      </svg>
-      Logout
-    </a>
-  </div>
-</nav>
-
-<!-- ══════════════════════════════════════════
-     TOAST
-══════════════════════════════════════════ -->
-<div id="toast" class="toast"></div>
-
-<!-- ══════════════════════════════════════════
-     LOADING OVERLAY
-══════════════════════════════════════════ -->
-<div id="loadingOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:2000; align-items:center; justify-content:center;">
-  <div style="background:var(--glass); border:1px solid var(--glass-b); border-radius:var(--r-xl); padding:32px 40px; text-align:center; backdrop-filter:blur(32px);">
-    <div class="loading-spinner" style="width:40px;height:40px;border-width:3px;margin:0 auto 14px;"></div>
-    <p style="color:var(--txt-muted);font-size:.85rem;font-weight:600;">Creating queue…</p>
+  <div class="page-title-section">
+    <h1 class="page-title">Create Queue & Service</h1>
+    <p class="page-subtitle">Manage queues and services for your office</p>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     SUCCESS POPUP
-══════════════════════════════════════════ -->
-<div id="successOverlay" class="success-overlay">
-  <div class="success-popup" style="position:relative;">
-    <div class="success-icon-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <polyline points="20 6 9 17 4 12"/>
-      </svg>
-    </div>
-
-    <h3>Queue Created!</h3>
-    <p>Your queue is now active and ready to serve customers.</p>
-
-    <div class="queue-details-box">
-      <div class="detail-row">
-        <span class="detail-label">Queue Name</span>
-        <span class="detail-value" id="popupQueueName">—</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Counters Assigned</span>
-        <span class="detail-value" id="popupCounterCount">—</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Queue IDs</span>
-        <span class="detail-value" id="popupQueueIds" style="font-family:'JetBrains Mono',monospace;font-size:.78rem;">—</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Status</span>
-        <span class="detail-value status-active">● Active</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Created At</span>
-        <span class="detail-value" id="popupCreatedAt">—</span>
-      </div>
-    </div>
-
-    <div class="popup-actions">
-      <button id="addAnotherBtn" class="popup-btn secondary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        Create Another
-      </button>
-      <a href="{{ url_for('dashboard.dashboard_home') }}" class="popup-btn primary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
-          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-        </svg>
-        Go to Dashboard
-      </a>
-    </div>
-  </div>
+<!-- BACK TO MENU BUTTON -->
+<div class="back-to-menu" id="backToMenuBtn" style="display: none;">
+  <button class="back-menu-btn" onclick="goBackToMenu()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    Back to Menu
+  </button>
 </div>
 
-<!-- ══════════════════════════════════════════
-     SUCCESS DATA (injected by Flask on redirect)
-══════════════════════════════════════════ -->
-{% if success_data %}
-<div id="successData" style="display:none;"
-     data-queue-name="{{ success_data.queue_name }}"
-     data-queue-ids="{{ success_data.queue_ids }}"
-     data-counter-count="{{ success_data.counter_count }}">
-</div>
-{% endif %}
-
-<!-- LANDING SCENE -->
+<!-- ========== LANDING SCENE ========== -->
 <div class="scene" id="landingScene">
-  <div class="landing-content">
-    <div class="landing-kicker">
-      <span class="kicker-dot"></span>
-      Queue &amp; Service Management Portal
+  <div class="landing-card">
+    <div class="landing-header">
+      <div class="landing-badge">
+        <span class="badge-dot"></span>
+        Queue & Service Management
+      </div>
+      <h2 class="landing-title">
+        What would you like to <span>create?</span>
+      </h2>
     </div>
-    <h1 class="landing-h1">
-      What would you<br><span>like to create?</span>
-    </h1>
-    <div class="choices">
-      <button class="choice" onclick="selectMode('queue')">
-        <div class="choice-shimmer"></div>
-        <div class="choice-left">
-          <div class="cicon green">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-              <line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
-              <line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
-          </div>
-          <div class="choice-text">
-            <strong>Create New Queue</strong>
-            <span>Set up a queue with token prefix, assign counters, services and auto-close schedule</span>
-          </div>
+    
+    <div class="choice-container">
+      <!-- Create Queue Card -->
+      <button class="choice-btn" onclick="selectMode('queue')">
+        <div class="choice-icon green-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <line x1="8" y1="6" x2="21" y2="6"/>
+            <line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/>
+          </svg>
+        </div>
+        <div class="choice-content">
+          <div class="choice-title">Create New Queue</div>
+          <div class="choice-desc">Set up a queue with token prefix, assign counters, services and auto-close schedule</div>
         </div>
         <div class="choice-arrow green-arrow">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
         </div>
       </button>
-      <button class="choice" onclick="selectMode('service')">
-        <div class="choice-shimmer amber-shimmer"></div>
-        <div class="choice-left">
-          <div class="cicon amber">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-            </svg>
-          </div>
-          <div class="choice-text">
-            <strong>Create New Service</strong>
-            <span>Register a service with a name and charge amount</span>
-          </div>
+
+      <!-- Create Service Card -->
+      <button class="choice-btn" onclick="selectMode('service')">
+        <div class="choice-icon amber-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div class="choice-content">
+          <div class="choice-title">Create New Service</div>
+          <div class="choice-desc">Register a service with a name and charge amount</div>
         </div>
         <div class="choice-arrow amber-arrow">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
         </div>
       </button>
     </div>
   </div>
 </div>
 
-<!-- MAIN CARD (hidden until choice is made) -->
+<!-- ========== MAIN FORM MODAL ========== -->
 <div class="modal-backdrop hidden" id="modalBackdrop">
   <div class="modal-card">
 
-    <!-- TAB BAR -->
+    <!-- Tabs -->
     <div class="tab-bar">
       <button class="tab active" data-tab="queue">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="6" x2="21" y2="6"/>
+          <line x1="8" y1="12" x2="21" y2="12"/>
           <line x1="8" y1="18" x2="21" y2="18"/>
-          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
-          <line x1="3" y1="18" x2="3.01" y2="18"/>
         </svg>
         Create Queue
       </button>
@@ -214,477 +111,287 @@
       <div class="tab-slider" id="tabSlider"></div>
     </div>
 
-    <!-- ════════════════════════════════
-         QUEUE FORM PANEL
-    ════════════════════════════════ -->
+    <!-- ===== QUEUE FORM ===== -->
     <div class="form-body" id="queueCard">
       <div class="form-scroll">
 
-        <!-- Flash messages -->
+        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
-            <div class="flash-messages" style="margin-bottom:16px;">
+            <div class="flash-messages">
               {% for category, message in messages %}
-                <div class="flash-msg" style="
-                  padding:10px 14px;border-radius:var(--r-md);margin-bottom:8px;
-                  font-size:.82rem;font-weight:600;cursor:pointer;
-                  {% if category == 'error' %}
-                    background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;
-                  {% else %}
-                    background:rgba(13,183,96,.1);border:1px solid rgba(13,183,96,.3);color:#6ee7a4;
-                  {% endif %}
-                ">{{ message }}</div>
+                <div class="flash-msg flash-{{ category }}">{{ message }}</div>
               {% endfor %}
             </div>
           {% endif %}
         {% endwith %}
 
-        <!-- Heading -->
-        <div class="form-heading">
-          <div class="fh-icon green">
+        <!-- Form Header -->
+        <div class="form-header">
+          <div class="form-header-icon green-header">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
               <line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
-              <line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
           </div>
-          <div>
+          <div class="form-header-text">
             <h2>Create New Queue</h2>
             <p>Assign counters, services, token prefix and auto-close schedule</p>
           </div>
         </div>
 
-        <!-- FORM -->
         <form id="queueForm" method="POST" action="{{ url_for('createqueue.create_queue_page') }}">
-
-          <!-- ── SERVICE ── -->
-          <div class="field">
-            <label class="lbl">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-              Service <span class="req">*</span>
-            </label>
-            <div class="seg">
-              <label class="seg-opt">
+          
+          <!-- Service Selection -->
+          <div class="form-section">
+            <label class="section-label">Service <span class="required">*</span></label>
+            <div class="radio-group">
+              <label class="radio-option">
                 <input type="radio" name="service_option" value="existing" checked>
-                <span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                  </svg>
-                  Existing Service
-                </span>
+                <span>📋 Existing Service</span>
               </label>
-              <label class="seg-opt">
+              <label class="radio-option">
                 <input type="radio" name="service_option" value="custom">
-                <span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="16"/>
-                    <line x1="8" y1="12" x2="16" y2="12"/>
-                  </svg>
-                  Create Custom
-                </span>
+                <span>✨ Create Custom</span>
               </label>
             </div>
 
-            <!-- Existing service dropdown -->
-            <div id="existingServiceDiv" class="sub-field">
-              <div class="inp-wrap">
-                <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                </svg>
-                <select name="existing_service_id">
-                  {% for svc in services %}
-                    <option value="{{ svc.id }}">{{ svc.name }} — LKR {{ svc.charge }}</option>
-                  {% else %}
-                    <option disabled>No services available</option>
-                  {% endfor %}
-                </select>
-              </div>
+            <div id="existingServiceDiv">
+              <select name="existing_service_id" class="form-input">
+                {% for svc in services %}
+                  <option value="{{ svc.id }}">{{ svc.name }} — LKR {{ svc.charge }}</option>
+                {% else %}
+                  <option disabled>No services available</option>
+                {% endfor %}
+              </select>
             </div>
 
-            <!-- Custom service fields -->
-            <div id="customServiceDiv" class="sub-field" style="display:none;">
-              <div class="sub-field-panel">
-                <div class="field-row" style="margin-bottom:0;">
-                  <div class="field" style="margin-bottom:0;">
-                    <label class="lbl" style="margin-bottom:6px;">Service Name</label>
-                    <div class="inp-wrap">
-                      <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
-                      <input type="text" name="custom_service_name" placeholder="e.g. Vehicle Registration">
-                    </div>
-                  </div>
-                  <div class="field" style="margin-bottom:0;">
-                    <label class="lbl" style="margin-bottom:6px;">Charge (LKR)</label>
-                    <div class="inp-wrap">
-                      <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="1" x2="12" y2="23"/>
-                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                      </svg>
-                      <input type="number" name="custom_service_charge" placeholder="e.g. 1500" min="0">
-                    </div>
-                  </div>
-                </div>
+            <div id="customServiceDiv" style="display:none;">
+              <div class="row-2">
+                <input type="text" name="custom_service_name" placeholder="Service Name" class="form-input">
+                <input type="number" name="custom_service_charge" placeholder="Charge (LKR)" class="form-input" min="0">
               </div>
             </div>
           </div>
 
           <div class="divider"></div>
 
-          <!-- ── QUEUE NAME ── -->
-          <div class="field">
-            <label class="lbl">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
-                <path d="M4 6h16M4 12h16M4 18h7"/>
-              </svg>
-              Queue Name <span class="req">*</span>
-            </label>
-            <div class="inp-wrap">
-              <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/>
-                <line x1="3" y1="6" x2="3.01" y2="6"/>
-              </svg>
-              <input type="text" name="queue_name" placeholder="e.g. NIC Renewal Queue" required>
-            </div>
+          <!-- Queue Name -->
+          <div class="form-section">
+            <label class="section-label">Queue Name <span class="required">*</span></label>
+            <input type="text" name="queue_name" placeholder="e.g. NIC Renewal Queue" class="form-input" required>
           </div>
 
-          <!-- ── TOKEN PREFIX & RANGE ── -->
-          <div class="field">
-            <label class="lbl">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-              </svg>
-              Token Prefix &amp; Range
-            </label>
-            <div class="field-row-3" style="margin-bottom:8px;">
-              <div class="field" style="margin-bottom:0;">
-                <label class="lbl" style="margin-bottom:6px;">Letter</label>
-                <div class="inp-wrap">
-                  <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="4 7 4 4 20 4 20 7"/>
-                    <line x1="9" y1="20" x2="15" y2="20"/>
-                    <line x1="12" y1="4" x2="12" y2="20"/>
-                  </svg>
-                  <select name="token_letter" id="token_letter">
-                    {% for letter in letters %}
-                      <option value="{{ letter }}">{{ letter }}</option>
-                    {% endfor %}
-                  </select>
-                </div>
+          <!-- Token Settings -->
+          <div class="form-section">
+            <label class="section-label">Token Prefix & Range</label>
+            <div class="row-3">
+              <div class="input-group">
+                <label class="input-label">Letter</label>
+                <select name="token_letter" id="token_letter" class="form-input">
+                  {% for letter in letters %}
+                    <option value="{{ letter }}">{{ letter }}</option>
+                  {% endfor %}
+                </select>
               </div>
-              <div class="field" style="margin-bottom:0;">
-                <label class="lbl" style="margin-bottom:6px;">Starting No.</label>
-                <div class="inp-wrap">
-                  <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="1" x2="12" y2="23"/>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5"/>
-                  </svg>
-                  <input type="number" name="token_start_number" id="token_start_number" value="1" min="1">
-                </div>
+              <div class="input-group">
+                <label class="input-label">Starting No.</label>
+                <input type="number" name="token_start_number" id="token_start_number" value="1" min="1" class="form-input">
               </div>
-              <div class="field" style="margin-bottom:0;">
-                <label class="lbl" style="margin-bottom:6px;">Max Capacity</label>
-                <div class="inp-wrap">
-                  <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                  </svg>
-                  <input type="number" name="max_capacity" id="max_capacity" value="50" min="1">
-                </div>
+              <div class="input-group">
+                <label class="input-label">Max Capacity</label>
+                <input type="number" name="max_capacity" id="max_capacity" value="50" min="1" class="form-input">
               </div>
             </div>
-            <!-- Live preview -->
             <div class="token-preview">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-              </svg>
+              <span class="preview-icon">🎫</span>
               <span id="tokenPreview">A-001 → A-050</span>
             </div>
           </div>
 
-          <!-- ── QUEUE TYPE ── -->
-          <div class="field">
-            <label class="lbl">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
-              Queue Type
-            </label>
-            <div class="inp-wrap">
-              <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
-              <select name="queue_type">
-                <option value="Short">Short</option>
-                <option value="Medium" selected>Medium</option>
-                <option value="Long">Long</option>
-                <option value="Normal">Normal</option>
-              </select>
-            </div>
+          <!-- Queue Type -->
+          <div class="form-section">
+            <label class="section-label">Queue Type</label>
+            <select name="queue_type" class="form-input">
+              <option value="Short">Short (Fast Service)</option>
+              <option value="Medium" selected>Medium (Standard)</option>
+              <option value="Long">Long (Complex Process)</option>
+              <option value="Normal">Normal (Regular)</option>
+            </select>
           </div>
 
           <div class="divider"></div>
 
-          <!-- ── COUNTERS ── -->
-          <div class="field">
-            <label class="lbl">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                <line x1="8" y1="21" x2="16" y2="21"/>
-                <line x1="12" y1="17" x2="12" y2="21"/>
-              </svg>
-              Assign to Counters <span class="req">*</span>
-              <em class="hint">select one or more</em>
-            </label>
-
+          <!-- Counters -->
+          <div class="form-section">
+            <label class="section-label">Assign to Counters <span class="required">*</span> <span class="hint-badge">select one or more</span></label>
             {% if counters %}
               <div class="checkbox-grid">
                 {% for counter in counters %}
-                  <label class="check-item">
+                  <label class="checkbox-item">
                     <input type="checkbox" name="counters" value="{{ counter.id }}">
-                    <span>{{ counter.name }}</span>
+                    <span>🖥️ {{ counter.name }}</span>
                   </label>
                 {% endfor %}
               </div>
             {% else %}
               <div class="empty-warning">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                No counters found for this office.
-                <a href="/create-counter">Create a counter first</a>
+                ⚠️ No counters found. <a href="/create-counter">Create a counter first</a>
               </div>
             {% endif %}
           </div>
 
           <div class="divider"></div>
 
-          <!-- ── AUTO-CLOSE SCHEDULE ── -->
-          <div class="field">
-            <label class="lbl">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
-              Auto-close Schedule
-              <span class="opt-tag">Optional</span>
-            </label>
-            <div class="field-row" style="margin-bottom:0;">
-              <div class="field" style="margin-bottom:0;">
-                <label class="lbl" style="margin-bottom:6px;">Set Inactive At</label>
-                <div class="inp-wrap">
-                  <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  <input type="time" name="auto_inactive_time" step="60">
-                </div>
+          <!-- Auto-close Schedule -->
+          <div class="form-section">
+            <label class="section-label">Auto-close Schedule <span class="optional-badge">Optional</span></label>
+            <div class="row-2">
+              <div class="input-group">
+                <label class="input-label">⏰ Set Inactive At</label>
+                <input type="time" name="auto_inactive_time" class="form-input">
               </div>
-              <div class="field" style="margin-bottom:0;">
-                <label class="lbl" style="margin-bottom:6px;">Set Active At</label>
-                <div class="inp-wrap">
-                  <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  <input type="time" name="auto_active_time" step="60">
-                </div>
+              <div class="input-group">
+                <label class="input-label">⏰ Set Active At</label>
+                <input type="time" name="auto_active_time" class="form-input">
               </div>
             </div>
           </div>
 
-          <div class="info-note" style="margin-top:14px;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <!-- Info Note -->
+          <div class="info-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="16" x2="12" y2="12"/>
               <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
-            A separate queue  is created per counter. Make sure your counters are active before assigning.
+            <span>A separate queue is created per counter. Make sure your counters are active before assigning.</span>
           </div>
 
-          <!-- ── SUBMIT ── -->
-          <button type="submit" class="submit-btn green-btn" id="submitBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <!-- Submit Button -->
+          <button type="submit" class="btn-submit btn-green" id="submitBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
               <line x1="8" y1="6" x2="21" y2="6"/>
               <line x1="8" y1="12" x2="21" y2="12"/>
               <line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/>
             </svg>
             Create Queue
           </button>
-
         </form>
       </div>
     </div>
-    <!-- end queueCard -->
 
-    <!-- ════════════════════════════════
-         SERVICE FORM PANEL
-    ════════════════════════════════ -->
+    <!-- ===== SERVICE FORM ===== -->
     <div class="form-body" id="serviceCard" style="display:none;">
       <div class="form-scroll">
-
-        <!-- Heading -->
-        <div class="form-heading">
-          <div class="fh-icon amber">
+        
+        <div class="form-header">
+          <div class="form-header-icon amber-header">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
           </div>
-          <div>
+          <div class="form-header-text">
             <h2>Create New Service</h2>
             <p>Register a service with a name and charge amount</p>
           </div>
         </div>
 
         <form id="serviceForm">
-
-          <!-- SERVICE NAME -->
-          <div class="field">
-            <label class="lbl">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-              Service Name <span class="req">*</span>
-            </label>
-            <div class="inp-wrap">
-              <svg class="inp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-              <input type="text" id="svcName" placeholder="e.g. Driving License Renewal" autocomplete="off">
-            </div>
+          <div class="form-section">
+            <label class="section-label">Service Name <span class="required">*</span></label>
+            <input type="text" id="svcName" placeholder="e.g. Driving License Renewal" class="form-input" autocomplete="off">
           </div>
 
-          <!-- CHARGE -->
-          <div class="field">
-            <label class="lbl">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;">
-                <line x1="12" y1="1" x2="12" y2="23"/>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-              </svg>
-              Charge (LKR) <span class="req">*</span>
-            </label>
-            <div class="inp-wrap">
-              <!-- LKR prefix badge -->
-              <span style="
-                position:absolute;left:13px;
-                font-size:.75rem;font-weight:700;
-                color:var(--amber);
-                pointer-events:none;letter-spacing:.04em;
-              ">LKR</span>
-              <input
-                type="number"
-                id="svcCharge"
-                placeholder="e.g. 2500"
-                min="0"
-                step="1"
-                style="padding-left:52px;"
-              >
-            </div>
+          <div class="form-section">
+            <label class="section-label">Charge (LKR) <span class="required">*</span></label>
+            <input type="number" id="svcCharge" placeholder="e.g. 2500" min="0" class="form-input">
           </div>
 
-          <div class="info-note" style="margin-top:4px;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="info-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="18" height="18">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="16" x2="12" y2="12"/>
               <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
-            Services are saved globally and can be assigned to any queue across all offices.
+            <span>Services are saved globally and can be assigned to any queue across all offices.</span>
           </div>
 
-          <!-- SUBMIT -->
-          <button type="submit" class="submit-btn amber-btn" id="svcSubmitBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <button type="submit" class="btn-submit btn-amber" id="svcSubmitBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
             </svg>
             Create Service
           </button>
-
         </form>
       </div>
     </div>
-    <!-- end serviceCard -->
 
-  </div><!-- end modal-card -->
-</div><!-- end modal-backdrop -->
+  </div>
+</div>
 
-<!-- ══════════════════════════════════════════
-     SERVICE SUCCESS POPUP
-══════════════════════════════════════════ -->
-<div id="serviceSuccessOverlay" class="success-overlay" style="--popup-accent: var(--amber); --popup-glow: var(--amber-glow);">
-  <div class="success-popup" style="border-color:rgba(245,158,11,.4); box-shadow: 0 0 0 1px rgba(255,255,255,.05), 0 40px 80px rgba(0,0,0,.5), 0 0 40px rgba(245,158,11,.18);">
-    <div class="success-icon-wrap" style="background:linear-gradient(135deg,var(--amber),var(--amber-deep)); box-shadow:0 0 30px var(--amber-glow);">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+<!-- ========== SUCCESS POPUPS ========== -->
+<div id="successOverlay" class="success-overlay">
+  <div class="success-popup">
+    <div class="success-icon green-success">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
         <polyline points="20 6 9 17 4 12"/>
       </svg>
     </div>
-
-    <h3 style="background:linear-gradient(135deg,#fcd34d,#d97706); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">
-      Service Created!
-    </h3>
-    <p>The service has been registered and is ready to be assigned to queues.</p>
-
-    <div class="queue-details-box" style="background:rgba(245,158,11,.08); border-color:rgba(245,158,11,.22);">
-      <div class="detail-row">
-        <span class="detail-label">Service ID</span>
-        <span class="detail-value" id="svcPopupId" style="font-family:'JetBrains Mono',monospace; color:var(--amber);">—</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Name</span>
-        <span class="detail-value" id="svcPopupName">—</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Charge</span>
-        <span class="detail-value" id="svcPopupCharge" style="color:var(--amber);">—</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Created At</span>
-        <span class="detail-value" id="svcPopupAt">—</span>
-      </div>
+    <h3>Queue Created!</h3>
+    <p>Your queue is now active and ready to serve customers.</p>
+    <div class="success-details">
+      <div class="detail-row"><span class="detail-label">Queue Name</span><span class="detail-value" id="popupQueueName">—</span></div>
+      <div class="detail-row"><span class="detail-label">Counters Assigned</span><span class="detail-value" id="popupCounterCount">—</span></div>
+      <div class="detail-row"><span class="detail-label">Queue IDs</span><span class="detail-value mono" id="popupQueueIds">—</span></div>
+      <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value status-active">● Active</span></div>
+      <div class="detail-row"><span class="detail-label">Created At</span><span class="detail-value" id="popupCreatedAt">—</span></div>
     </div>
-
     <div class="popup-actions">
-      <button id="svcAddAnotherBtn" class="popup-btn secondary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        Add Another
-      </button>
-      <a href="{{ url_for('dashboard.dashboard_home') }}" class="popup-btn" style="background:linear-gradient(135deg,var(--amber),var(--amber-deep)); color:white; box-shadow:0 4px 15px var(--amber-glow); flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:12px 18px; border-radius:var(--r-md); font-weight:700; font-size:.83rem; text-decoration:none; border:none; cursor:pointer; transition:all .25s var(--ease);">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
-          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-        </svg>
-        Go to Dashboard
-      </a>
+      <button id="addAnotherBtn" class="popup-btn secondary">Create Another</button>
+      <a href="{{ url_for('dashboard.dashboard_home') }}" class="popup-btn primary">Go to Dashboard</a>
     </div>
   </div>
 </div>
 
-<!-- JS -->
+<div id="serviceSuccessOverlay" class="success-overlay">
+  <div class="success-popup">
+    <div class="success-icon amber-success">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <h3>Service Created!</h3>
+    <p>The service has been registered successfully.</p>
+    <div class="success-details">
+      <div class="detail-row"><span class="detail-label">Service ID</span><span class="detail-value mono" id="svcPopupId">—</span></div>
+      <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value" id="svcPopupName">—</span></div>
+      <div class="detail-row"><span class="detail-label">Charge</span><span class="detail-value" id="svcPopupCharge">—</span></div>
+      <div class="detail-row"><span class="detail-label">Created At</span><span class="detail-value" id="svcPopupAt">—</span></div>
+    </div>
+    <div class="popup-actions">
+      <button id="svcAddAnotherBtn" class="popup-btn secondary">Add Another</button>
+      <a href="{{ url_for('dashboard.dashboard_home') }}" class="popup-btn primary">Go to Dashboard</a>
+    </div>
+  </div>
+</div>
+
+{% if success_data %}
+<div id="successData" style="display:none;" 
+     data-queue-name="{{ success_data.queue_name }}"
+     data-queue-ids="{{ success_data.queue_ids }}"
+     data-counter-count="{{ success_data.counter_count }}">
+</div>
+{% endif %}
+
+<div id="toast" class="toast"></div>
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <p>Creating queue...</p>
+</div>
+
 <script src="{{ url_for('static', filename='js/createqueue.js') }}"></script>
-</body>
-</html>
+{% endblock %}

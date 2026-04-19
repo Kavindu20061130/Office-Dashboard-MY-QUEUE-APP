@@ -61,6 +61,13 @@ def create_staff_page():
     office_id = session.get("office_id")
     office_ref = db.collection("OFFICES").document(office_id)
 
+    # ===== FIX: Get office name for sidebar =====
+    office_doc = office_ref.get()
+    office_name = None
+    if office_doc.exists:
+        office_name = office_doc.to_dict().get("name")
+    # ===========================================
+
     counters = []
     for doc in db.collection("COUNTERS").where("officeId", "==", office_ref).stream():
         data = doc.to_dict()
@@ -84,10 +91,13 @@ def create_staff_page():
         data = doc.to_dict()
         queues.append({"id": doc.id, "name": data.get("name"), "status": data.get("status")})
 
+    # ===== FIX: Pass office_name and office_id to template =====
     return render_template("createcounter.html",
                            counters=counters,
                            staff=staff,
-                           queues=queues)
+                           queues=queues,
+                           office_name=office_name,
+                           office_id=office_id)
 
 # ---------- CHECK USERNAME UNIQUENESS ----------
 @createcounterstaff.route("/check-username", methods=["GET"])
