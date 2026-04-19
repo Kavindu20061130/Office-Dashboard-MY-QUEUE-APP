@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   createcounter.js — QueueLK Admin (FINAL WITH SUCCESS POPUP)
+   createcounter.js — QueueLK Admin (INLINE FORM)
 ═══════════════════════════════════════════════ */
 
 // ── Toast ──────────────────────────────────────
@@ -10,9 +10,8 @@ function toast(msg, type = 'success') {
   setTimeout(() => t.classList.remove('show'), 3300);
 }
 
-// ── Dashboard Navigation (Back Button) ─────────
+// ── Dashboard Navigation ─────────────────────────
 function goBackToDashboard() {
-  // Close any open popups
   const successPopup = document.getElementById('successPopup');
   const deletePopup = document.getElementById('deleteConfirmPopup');
   if (successPopup) successPopup.classList.remove('active');
@@ -20,74 +19,84 @@ function goBackToDashboard() {
   window.location.href = '/dashboard';
 }
 
-// ── Step flow: Landing → Modal ─────────────────
+// ── Step flow: Landing → Inline Form ─────────────────
 let currentMode = 'new';
 
 function selectMode(mode) {
   currentMode = mode;
-  document.getElementById('landingScreen').classList.add('out');
+  
+  // Hide the entire landing card content except the form trigger? Actually hide the badge and title
+  const landingBadge = document.querySelector('.landing-badge');
+  const landingTitle = document.querySelector('.landing-title');
+  const choiceContainer = document.querySelector('.choice-container');
+  
+  if (landingBadge) landingBadge.style.display = 'none';
+  if (landingTitle) landingTitle.style.display = 'none';
+  if (choiceContainer) choiceContainer.style.display = 'none';
+  
+  // Show the form inline
   const backdrop = document.getElementById('modalBackdrop');
-  backdrop.classList.add('open');
+  backdrop.classList.remove('hidden');
+  backdrop.classList.add('visible');
+  
+  // Switch to selected tab
   switchTab(mode);
 }
 
-function goBack() {
-  const backdrop = document.getElementById('modalBackdrop');
-  backdrop.classList.remove('open');
-  const landing = document.getElementById('landingScreen');
-  landing.classList.remove('out');
-  document.getElementById('editPanel').style.display = 'none';
-  if (document.getElementById('staffSelect'))
-    document.getElementById('staffSelect').value = '';
-}
-
-// ── Tab switch with animated slider ───────────
+// ── Tab switch with animated slider ────
 function switchTab(mode) {
   currentMode = mode;
 
-  const tabNew      = document.getElementById('tabNew');
-  const tabExisting = document.getElementById('tabExisting');
-  const slider      = document.getElementById('tabSlider');
+  const tabNew = document.querySelector('.tab[data-tab="new"]');
+  const tabExisting = document.querySelector('.tab[data-tab="existing"]');
+  const slider = document.getElementById('tabSlider');
 
-  tabNew.classList.toggle('active', mode === 'new');
-  tabExisting.classList.toggle('active', mode === 'existing');
+  if (!tabNew || !tabExisting) {
+    console.error('Tab buttons not found');
+    return;
+  }
 
-  document.getElementById('newCard').style.display      = mode === 'new'      ? 'flex' : 'none';
-  document.getElementById('existingCard').style.display = mode === 'existing' ? 'flex' : 'none';
+  // Update tab active states
+  if (mode === 'new') {
+    tabNew.classList.add('active');
+    tabExisting.classList.remove('active');
+    document.getElementById('newCard').style.display = 'flex';
+    document.getElementById('existingCard').style.display = 'none';
+    resetUsernameCheck();
+  } else {
+    tabNew.classList.remove('active');
+    tabExisting.classList.add('active');
+    document.getElementById('newCard').style.display = 'none';
+    document.getElementById('existingCard').style.display = 'flex';
+    
+    // Reset staff selection when switching to manage tab
+    const staffSelect = document.getElementById('staffSelect');
+    if (staffSelect) staffSelect.value = '';
+    const editPanel = document.getElementById('editPanel');
+    if (editPanel) editPanel.style.display = 'none';
+  }
 
+  // Animate slider
   requestAnimationFrame(() => {
     const activeTab = mode === 'new' ? tabNew : tabExisting;
-    const bar       = document.querySelector('.tab-bar');
+    const bar = document.querySelector('.tab-bar');
     if (activeTab && bar && slider) {
       const barRect = bar.getBoundingClientRect();
       const tabRect = activeTab.getBoundingClientRect();
-      slider.style.left  = (tabRect.left - barRect.left) + 'px';
+      slider.style.left = (tabRect.left - barRect.left) + 'px';
       slider.style.width = tabRect.width + 'px';
     }
   });
-
-  if (mode === 'existing') {
-    if (document.getElementById('staffSelect'))
-      document.getElementById('staffSelect').value = '';
-    document.getElementById('editPanel').style.display = 'none';
-  }
-  
-  // Reset username check when switching to new tab
-  if (mode === 'new') {
-    resetUsernameCheck();
-  }
 }
 
-// ── SUCCESS POPUP FUNCTIONS (BIG LIKE DELETE) ──
+// ── SUCCESS POPUP FUNCTIONS ────────────────────
 function showSuccessPopup(staffData) {
   const successUsername = document.getElementById('successUsername');
   const successCounter = document.getElementById('successCounter');
-  const successStatus = document.getElementById('successStatus');
   const popup = document.getElementById('successPopup');
   
   if (successUsername) successUsername.textContent = staffData.username;
   if (successCounter) successCounter.textContent = staffData.counter;
-  if (successStatus) successStatus.textContent = staffData.status;
   if (popup) popup.classList.add('active');
 }
 
@@ -103,7 +112,7 @@ function goToDashboardFromPopup() {
 function addAnotherStaff() {
   hideSuccessPopup();
   
-  // Reset form fields
+  // Reset new staff form
   const newUsername = document.getElementById('newUsername');
   const newPassword = document.getElementById('newPassword');
   const newConfirm = document.getElementById('newConfirm');
@@ -122,30 +131,27 @@ function addAnotherStaff() {
   if (strengthMsg) strengthMsg.innerHTML = '';
   if (matchMsg) matchMsg.innerHTML = '';
   
-  // Reset radio button to "Use Existing"
   const existingRadio = document.querySelector('input[name="counterOption"][value="existing"]');
   if (existingRadio) existingRadio.checked = true;
   toggleCounterInputs('new');
   
-  // Reset flags
   isUsernameAvailable = false;
   isUsernameLengthValid = false;
   updateCreateButtonState();
   
-  // Focus on username field
   if (newUsername) newUsername.focus();
   
-  // Ensure modal is open and on new tab
+  // Ensure form is visible
   const backdrop = document.getElementById('modalBackdrop');
-  if (backdrop && !backdrop.classList.contains('open')) {
-    backdrop.classList.add('open');
+  if (backdrop && !backdrop.classList.contains('visible')) {
+    backdrop.classList.add('visible');
   }
   switchTab('new');
 }
 
 // ── Username availability ──────────────────────
 let usernameCheckTimeout = null;
-let isUsernameAvailable  = false;
+let isUsernameAvailable = false;
 let isUsernameLengthValid = false;
 
 function resetUsernameCheck() {
@@ -162,7 +168,7 @@ function resetUsernameCheck() {
 
 function checkUsernameAvailability() {
   const username = document.getElementById('newUsername').value.trim();
-  const msgDiv   = document.getElementById('usernameAvailabilityMsg');
+  const msgDiv = document.getElementById('usernameAvailabilityMsg');
   
   if (!username) {
     msgDiv.innerHTML = '';
@@ -216,16 +222,16 @@ function isPasswordValid(pwd) {
 }
 
 function updateCreateButtonState() {
-  const tipOk  = document.getElementById('tipCheck')?.checked || false;
-  const opt    = document.querySelector('input[name="counterOption"]:checked')?.value;
-  const ctrOk  = opt === 'existing'
+  const tipOk = document.getElementById('tipCheck')?.checked || false;
+  const opt = document.querySelector('input[name="counterOption"]:checked')?.value;
+  const ctrOk = opt === 'existing'
     ? !!document.getElementById('newExistingCounter')?.value
     : (document.getElementById('newCounterName')?.value.trim() !== '');
-  const pwOk   = isPasswordValid(document.getElementById('newPassword')?.value || '');
-  const matchOk= document.getElementById('newPassword')?.value === document.getElementById('newConfirm')?.value;
-  const btn    = document.getElementById('createBtn');
+  const pwOk = isPasswordValid(document.getElementById('newPassword')?.value || '');
+  const matchOk = document.getElementById('newPassword')?.value === document.getElementById('newConfirm')?.value;
+  const btn = document.getElementById('createBtn');
   
-  if(btn) btn.disabled = !(isUsernameAvailable && isUsernameLengthValid && tipOk && ctrOk && pwOk && matchOk);
+  if (btn) btn.disabled = !(isUsernameAvailable && isUsernameLengthValid && tipOk && ctrOk && pwOk && matchOk);
 }
 
 // ── Password strength/match NEW ────────────────
@@ -245,9 +251,9 @@ function checkNewPasswordStrength() {
 }
 
 function checkNewPasswordMatch() {
-  const pwd  = document.getElementById('newPassword')?.value || '';
+  const pwd = document.getElementById('newPassword')?.value || '';
   const conf = document.getElementById('newConfirm')?.value || '';
-  const div  = document.getElementById('newMatchMsg');
+  const div = document.getElementById('newMatchMsg');
   if (!conf) { if(div) div.innerHTML = ''; updateCreateButtonState(); return; }
   div.innerHTML = (pwd === conf && pwd)
     ? '<span class="match-ok">✅ Match</span>'
@@ -277,17 +283,17 @@ function toggleCounterInputs(ctx) {
 
 // ── Create staff (WITH SUCCESS POPUP) ──────────
 function createStaff() {
-  const username   = document.getElementById('newUsername')?.value.trim() || '';
-  const password   = document.getElementById('newPassword')?.value || '';
-  const confirm    = document.getElementById('newConfirm')?.value || '';
-  const queueId    = document.getElementById('queueSelect')?.value || '';
+  const username = document.getElementById('newUsername')?.value.trim() || '';
+  const password = document.getElementById('newPassword')?.value || '';
+  const confirm = document.getElementById('newConfirm')?.value || '';
+  const queueId = document.getElementById('queueSelect')?.value || '';
   const tipChecked = document.getElementById('tipCheck')?.checked || false;
 
-  if (!username || username.length < 8)    { toast('Username must be at least 8 chars', 'error'); return; }
-  if (!isUsernameAvailable)                { toast('Username not available', 'error'); return; }
-  if (!isPasswordValid(password))          { toast('Password must be 8–18 chars with a digit', 'error'); return; }
-  if (password !== confirm)                { toast('Passwords do not match', 'error'); return; }
-  if (!tipChecked)                         { toast('Please confirm the details first', 'error'); return; }
+  if (!username || username.length < 8) { toast('Username must be at least 8 chars', 'error'); return; }
+  if (!isUsernameAvailable) { toast('Username not available', 'error'); return; }
+  if (!isPasswordValid(password)) { toast('Password must be 8–18 chars with a digit', 'error'); return; }
+  if (password !== confirm) { toast('Passwords do not match', 'error'); return; }
+  if (!tipChecked) { toast('Please confirm the details first', 'error'); return; }
 
   const opt = document.querySelector('input[name="counterOption"]:checked')?.value;
   let existingCounterId = null, newCounterName = null;
@@ -329,14 +335,13 @@ function createStaff() {
     }
     
     if (d.success) {
-      // SHOW BIG SUCCESS POPUP (like delete popup)
       showSuccessPopup({
         username: username,
         counter: counterDisplayName,
         status: 'Active'
       });
       
-      // Reset form for next entry
+      // Reset form
       const newUsername = document.getElementById('newUsername');
       const newPassword = document.getElementById('newPassword');
       const newConfirm = document.getElementById('newConfirm');
@@ -355,12 +360,10 @@ function createStaff() {
       if (strengthMsg) strengthMsg.innerHTML = '';
       if (matchMsg) matchMsg.innerHTML = '';
       
-      // Reset radio button
       const existingRadio = document.querySelector('input[name="counterOption"][value="existing"]');
       if (existingRadio) existingRadio.checked = true;
       toggleCounterInputs('new');
       
-      // Reset flags
       isUsernameAvailable = false;
       isUsernameLengthValid = false;
       updateCreateButtonState();
@@ -586,9 +589,9 @@ function checkEditPasswordStrength() {
 }
 
 function checkEditPasswordMatch() {
-  const pwd  = document.getElementById('editPassword')?.value || '';
+  const pwd = document.getElementById('editPassword')?.value || '';
   const conf = document.getElementById('editConfirm')?.value || '';
-  const div  = document.getElementById('editMatchMsg');
+  const div = document.getElementById('editMatchMsg');
   if (!conf) { if(div) div.innerHTML = ''; return; }
   div.innerHTML = (pwd === conf)
     ? '<span class="match-ok">✅ Match</span>'
@@ -597,6 +600,23 @@ function checkEditPasswordMatch() {
 
 // ── DOM ready ──────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Initially hide the form
+  const backdrop = document.getElementById('modalBackdrop');
+  if (backdrop) {
+    backdrop.classList.add('hidden');
+  }
+  
+  // Set up tab click handlers
+  const tabNew = document.querySelector('.tab[data-tab="new"]');
+  const tabExisting = document.querySelector('.tab[data-tab="existing"]');
+  
+  if (tabNew) {
+    tabNew.addEventListener('click', () => switchTab('new'));
+  }
+  if (tabExisting) {
+    tabExisting.addEventListener('click', () => switchTab('existing'));
+  }
+  
   switchTab('new');
 
   const newUsername = document.getElementById('newUsername');
@@ -672,7 +692,6 @@ document.addEventListener('DOMContentLoaded', () => {
     r.addEventListener('change', () => toggleCounterInputs('edit'))
   );
   
-  // Delete confirmation modal listeners
   const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
   if (confirmDeleteBtn) confirmDeleteBtn.addEventListener('click', executeDeleteStaff);
   
@@ -686,7 +705,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // SUCCESS POPUP EVENT LISTENERS
   const addAnotherBtn = document.getElementById('addAnotherBtn');
   if (addAnotherBtn) addAnotherBtn.addEventListener('click', addAnotherStaff);
   

@@ -11,9 +11,7 @@
 </head>
 
 <body>
-
   <div class="main-wrapper">
-
     <!-- Left Panel: Branding & Stats -->
     <div class="left-panel">
       <div class="branding">
@@ -22,16 +20,14 @@
         </div>
         <div>
           <h1 class="brand-name">Queue<span>LK</span></h1>
-          <p class="brand-sub">Admin Dashboard</p>
+          <p class="brand-sub">Government Queue Management</p>
         </div>
       </div>
-
       <div class="hero-text">
         <h2>Smart Queue Management for Sri Lankan Government Offices</h2>
         <p>Manage queues, monitor performance, and deliver efficient service to citizens across all 331 Divisional
           Secretariats.</p>
       </div>
-
       <div class="stats-container">
         <div class="stat-item"><strong class="stat-number" data-target="331">0</strong>DS Offices</div>
         <div class="stat-item"><strong class="stat-number" data-target="22">0</strong>Million Citizens</div>
@@ -39,81 +35,377 @@
       </div>
     </div>
 
-    <!-- Right Panel: Login Form -->
+    <!-- Right Panel: Unified Login Form -->
     <div class="right-panel">
-      <div class="login-box">
+      <div class="login-box" id="loginBox">
+        <h2>Sign In</h2>
+        <p class="subtitle">Use your office email or counter username</p>
 
-        <!-- Role Toggle Switch -->
-        <div class="role-selector">
-          <input type="radio" id="roleCounter" name="role" value="counter" checked onclick="toggleRole('counter')">
-          <label for="roleCounter" class="role-label">Counter</label>
+        <form action="/login" method="POST" autocomplete="off" id="loginForm">
+          <!-- CSRF Token (Security) -->
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-          <input type="radio" id="roleAdmin" name="role" value="admin" onclick="toggleRole('admin')">
-          <label for="roleAdmin" class="role-label">Admin</label>
-
-          <div class="role-slider"></div>
-        </div>
-
-        <h2 id="loginTitle">Counter Login</h2>
-        <p class="subtitle" id="loginSubtitle">Sign in to manage your counter's service queue</p>
-
-        <!-- autocomplete="off" stops the browser from auto-filling old data -->
-        <form action="/login" method="POST" autocomplete="off">
-
-          <input type="hidden" name="user_role" id="userRoleInput" value="counter">
-
-          <!-- Office Selection -->
-          <div class="office-info-box">
-            <div class="office-details">
-              <select name="office_id" id="officeSelect" required onchange="updateOfficeID()">
-                <option value="">Loading offices...</option>
-              </select>
-              <div id="officeIdDisplay" class="office-id-text">
-                Office ID: Select to see ID
-              </div>
-            </div>
-          </div>
-
-          <!-- USERNAME FIELD -->
+          <!-- Username / Email -->
           <div class="form-group">
-            <label id="userLabel">Counter Username</label>
+            <label>Username or Email</label>
             <div class="input-wrapper">
-              <input type="text" name="email" id="userInput" placeholder="e.g. iamsaman" required
-                autocomplete="new-password">
+              <input type="text" name="username" id="username" placeholder="e.g. admin@office.gov.lk or counter123"
+                required autocomplete="off">
             </div>
           </div>
 
-          <!-- PASSWORD FIELD -->
+          <!-- Password -->
           <div class="form-group">
-            <label id="passLabel">Password</label>
+            <label>Password</label>
             <div class="input-wrapper">
-              <input type="password" name="password" id="passwordField" placeholder="••••••••" required
-                autocomplete="new-password">
+              <input type="password" name="password" id="password" placeholder="••••••••" required autocomplete="off">
             </div>
           </div>
 
-          <!-- Security Message -->
-          <div id="infoAlert" class="info-alert"></div>
+          <!-- Security Note -->
+          <div id="infoAlert" class="info-alert">
+            🔒 Secure Login: Your data is encrypted and protected. Please enter your credentials carefully.
+          </div>
 
           <!-- Flash Messages -->
-          {% with messages = get_flashed_messages(with_categories=true) %}
+          <div id="flashMessages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-              {% for category, message in messages %}
-                <div class="custom-{{ category }}">
-                  {{ message }}
-                 </div>
-              {% endfor %}
+            {% for category, message in messages %}
+            <div class="custom-{{ category }}">{{ message }}</div>
+            {% endfor %}
             {% endif %}
-          {% endwith %}
+            {% endwith %}
+          </div>
 
-          <button type="submit" class="btn-login" id="submitBtn">
-            Sign In to Counter
-          </button>
+          <button type="submit" class="btn-login" id="submitBtn">Sign In</button>
         </form>
       </div>
     </div>
-
   </div>
+
+  <!-- Timer Popup Modal -->
+  <div id="lockoutModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🔒 Account Temporarily Locked</h3>
+      </div>
+      <div class="modal-body">
+        <div class="timer-circle">
+          <div class="timer-number" id="timerDisplay">15:00</div>
+        </div>
+        <p>Too many failed login attempts.</p>
+        <p class="timer-label">Please wait before trying again</p>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal()">I Understand</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Countdown Badge -->
+  <div id="countdownBadge" class="countdown-badge">
+    ⏱️ Locked: <span id="badgeTimer">15:00</span>
+  </div>
+
+  <script>
+    // Timer functionality with localStorage persistence
+    let lockoutTimer = null;
+    let remainingSeconds = 0;
+    let isLocked = false;
+    let modalShown = false;
+
+    // ✅ Load saved lockout state from localStorage
+    function loadLockoutState() {
+      const savedEndTime = localStorage.getItem('lockout_end_time');
+
+      if (savedEndTime) {
+        const endTime = parseInt(savedEndTime);
+        const now = Date.now();
+
+        if (now < endTime) {
+          // Lockout is still active
+          remainingSeconds = Math.floor((endTime - now) / 1000);
+          isLocked = true;
+          startLockoutTimer(remainingSeconds);
+          disableForm(true);
+          showBadge();
+          return true;
+        } else {
+          // Lockout has expired
+          clearLockoutState();
+          return false;
+        }
+      }
+      return false;
+    }
+
+    // ✅ Save lockout state to localStorage
+    function saveLockoutState(seconds) {
+      const endTime = Date.now() + (seconds * 1000);
+      localStorage.setItem('lockout_end_time', endTime.toString());
+      localStorage.setItem('lockout_start_time', Date.now().toString());
+    }
+
+    // ✅ Clear lockout state
+    function clearLockoutState() {
+      localStorage.removeItem('lockout_end_time');
+      localStorage.removeItem('lockout_start_time');
+      isLocked = false;
+      modalShown = false;
+    }
+
+    // Check for lockout message from server
+    function checkForLockout() {
+      if (isLocked) return;
+
+      const flashMessages = document.querySelectorAll('.custom-error');
+      for (let msg of flashMessages) {
+        const text = msg.textContent.toLowerCase();
+        if (text.includes('locked') ||
+          text.includes('too many failed') ||
+          text.includes('too many login attempts') ||
+          text.includes('rate limit')) {
+
+          isLocked = true;
+
+          let minutes = 15;
+          if (text.includes('minute')) {
+            const match = text.match(/(\d+)\s*minute/);
+            if (match) minutes = parseInt(match[1]);
+          }
+
+          const totalSeconds = minutes * 60;
+          saveLockoutState(totalSeconds);
+          startLockoutTimer(totalSeconds);
+          disableForm(true);
+          showModalOnce();
+          break;
+        }
+      }
+    }
+
+    // Start lockout timer
+    function startLockoutTimer(seconds) {
+      if (lockoutTimer) {
+        clearInterval(lockoutTimer);
+        lockoutTimer = null;
+      }
+
+      remainingSeconds = seconds;
+      updateTimerDisplay();
+
+      lockoutTimer = setInterval(function () {
+        if (remainingSeconds <= 0) {
+          // Timer finished - unlock
+          clearInterval(lockoutTimer);
+          lockoutTimer = null;
+          clearLockoutState();
+          disableForm(false);
+          hideModal();
+          hideBadge();
+          showTemporaryMessage('✅ Account unlocked. You can now try logging in again.', 'success');
+          enableFormFields();
+        } else {
+          remainingSeconds--;
+          updateTimerDisplay();
+
+          // ✅ Update localStorage with remaining time
+          const newEndTime = Date.now() + (remainingSeconds * 1000);
+          localStorage.setItem('lockout_end_time', newEndTime.toString());
+        }
+      }, 1000);
+    }
+
+    // Update timer display
+    function updateTimerDisplay() {
+      const minutes = Math.floor(remainingSeconds / 60);
+      const seconds = remainingSeconds % 60;
+      const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+      const timerDisplay = document.getElementById('timerDisplay');
+      const badgeTimer = document.getElementById('badgeTimer');
+
+      if (timerDisplay) timerDisplay.textContent = timeString;
+      if (badgeTimer) badgeTimer.textContent = timeString;
+
+      // Update circular progress
+      const totalSeconds = 15 * 60;
+      const progress = (remainingSeconds / totalSeconds) * 360;
+      const timerCircle = document.querySelector('.timer-circle');
+      if (timerCircle) {
+        timerCircle.style.background = `conic-gradient(#1a7e3c ${progress}deg, #e0e0e0 ${progress}deg)`;
+      }
+    }
+
+    // Disable/enable form
+    function disableForm(disabled) {
+      const username = document.getElementById('username');
+      const password = document.getElementById('password');
+      const submitBtn = document.getElementById('submitBtn');
+      const loginBox = document.getElementById('loginBox');
+
+      if (username) username.disabled = disabled;
+      if (password) password.disabled = disabled;
+      if (submitBtn) submitBtn.disabled = disabled;
+
+      if (loginBox) {
+        if (disabled) {
+          loginBox.classList.add('form-disabled');
+        } else {
+          loginBox.classList.remove('form-disabled');
+        }
+      }
+    }
+
+    // Enable form fields
+    function enableFormFields() {
+      const username = document.getElementById('username');
+      const password = document.getElementById('password');
+      const submitBtn = document.getElementById('submitBtn');
+
+      if (username) username.disabled = false;
+      if (password) password.disabled = false;
+      if (submitBtn) submitBtn.disabled = false;
+    }
+
+    // Show modal only once
+    function showModalOnce() {
+      if (modalShown) return;
+
+      modalShown = true;
+      const modal = document.getElementById('lockoutModal');
+      if (modal) {
+        modal.style.display = 'block';
+        showBadge();
+
+        setTimeout(function () {
+          if (modal.style.display === 'block') {
+            modal.style.display = 'none';
+          }
+        }, 5000);
+      }
+    }
+
+    function showModal() {
+      const modal = document.getElementById('lockoutModal');
+      if (modal) modal.style.display = 'block';
+    }
+
+    function hideModal() {
+      const modal = document.getElementById('lockoutModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function showBadge() {
+      const badge = document.getElementById('countdownBadge');
+      if (badge) badge.style.display = 'block';
+    }
+
+    function hideBadge() {
+      const badge = document.getElementById('countdownBadge');
+      if (badge) badge.style.display = 'none';
+    }
+
+    function closeModal() {
+      hideModal();
+    }
+
+    function showTemporaryMessage(message, type) {
+      const flashContainer = document.getElementById('flashMessages');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `custom-${type}`;
+      msgDiv.textContent = message;
+
+      const closeBtn = document.createElement('span');
+      closeBtn.innerHTML = '&times;';
+      closeBtn.style.cssText = 'float:right;cursor:pointer;font-size:20px;margin-left:10px;font-weight:bold;';
+      closeBtn.onclick = function () { msgDiv.remove(); };
+      msgDiv.appendChild(closeBtn);
+
+      if (flashContainer) {
+        flashContainer.appendChild(msgDiv);
+
+        setTimeout(() => {
+          msgDiv.style.transition = 'opacity 0.3s';
+          msgDiv.style.opacity = '0';
+          setTimeout(() => msgDiv.remove(), 300);
+        }, 5000);
+      }
+    }
+
+    // Handle form submission
+    let submissionCount = 0;
+    let lastSubmissionTime = 0;
+
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+      loginForm.addEventListener('submit', function (e) {
+        if (isLocked) {
+          e.preventDefault();
+          showTemporaryMessage('⏱️ Account is locked. Please wait.', 'error');
+          return false;
+        }
+
+        const now = Date.now();
+        const timeSinceLast = now - lastSubmissionTime;
+
+        if (timeSinceLast < 2000 && submissionCount >= 3) {
+          e.preventDefault();
+          showTemporaryMessage('⚠️ Please wait before submitting again.', 'error');
+          return false;
+        }
+
+        if (timeSinceLast > 60000) {
+          submissionCount = 0;
+        }
+
+        submissionCount++;
+        lastSubmissionTime = now;
+      });
+    }
+
+    // ✅ Initialize - load saved state FIRST, then check for new lockouts
+    document.addEventListener('DOMContentLoaded', function () {
+      // ❌ Removed duplicate close button code – login.js handles this
+
+      // Animate stats counters
+      const counters = document.querySelectorAll('.stat-number');
+      counters.forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        if (isNaN(target)) return;
+
+        let current = 0;
+        const increment = target / 80;
+        const updateCounter = () => {
+          current += increment;
+          if (current < target) {
+            counter.textContent = Math.floor(current);
+            requestAnimationFrame(updateCounter);
+          } else {
+            counter.textContent = target;
+          }
+        };
+        updateCounter();
+      });
+
+      // ✅ First, load any existing lockout state from localStorage
+      const wasLocked = loadLockoutState();
+
+      // ✅ Then check for new lockout messages from server (if not already locked)
+      if (!wasLocked) {
+        setTimeout(checkForLockout, 100);
+      }
+    });
+
+    // ✅ Also check when page becomes visible again (user returns to tab)
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && isLocked) {
+        // Update display when user comes back to tab
+        updateTimerDisplay();
+      }
+    });
+  </script>
 
   <script src="/static/js/login.js"></script>
 </body>

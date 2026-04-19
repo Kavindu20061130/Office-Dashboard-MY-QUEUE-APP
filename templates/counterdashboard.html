@@ -187,7 +187,38 @@
         </div>
     </div>
 
+
     <script src="{{ url_for('static', filename='js/counterdashboard.js') }}"></script>
+
+
+    <script>
+    // Wait for the counter info card to be populated, then sync to sidebar
+    function syncCounterToSidebar() {
+        const counterCard = document.getElementById('counter');
+        const sidebarUserName = document.getElementById('sidebar-user-name');
+        const userAvatar = document.getElementById('userAvatar');
+        
+        if (counterCard && sidebarUserName && counterCard.textContent !== 'Loading...') {
+            const counterName = counterCard.textContent;
+            sidebarUserName.textContent = counterName;
+            if (userAvatar && counterName) {
+                userAvatar.textContent = counterName.charAt(0).toUpperCase();
+            }
+        }
+    }
+    
+    // Observe changes to the counter info card (since data loads dynamically)
+    const observer = new MutationObserver(syncCounterToSidebar);
+    const counterCard = document.getElementById('counter');
+    if (counterCard) {
+        observer.observe(counterCard, { childList: true, characterData: true, subtree: true });
+    }
+    
+    // Also run once in case data is already loaded
+    setTimeout(syncCounterToSidebar, 500);
+</script>
+
+
 </body>
 
 </html>

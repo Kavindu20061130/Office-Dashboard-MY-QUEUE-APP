@@ -3,10 +3,11 @@ from firebase_config import db
 from datetime import datetime
 import re
 from google.cloud import firestore
+import bcrypt   # <-- added for hashing
 
 createcounterstaff = Blueprint("createcounterstaff", __name__)
 
-# ---------- ID generators ----------
+# ---------- ID generators (unchanged) ----------
 def get_next_counter_id():
     counter_ref = db.collection("METADATA").document("counter_counter")
     transaction = db.transaction()
@@ -61,12 +62,8 @@ def create_staff_page():
     office_id = session.get("office_id")
     office_ref = db.collection("OFFICES").document(office_id)
 
-    # ===== FIX: Get office name for sidebar =====
     office_doc = office_ref.get()
-    office_name = None
-    if office_doc.exists:
-        office_name = office_doc.to_dict().get("name")
-    # ===========================================
+    office_name = office_doc.to_dict().get("name") if office_doc.exists else None
 
     counters = []
     for doc in db.collection("COUNTERS").where("officeId", "==", office_ref).stream():
@@ -91,7 +88,6 @@ def create_staff_page():
         data = doc.to_dict()
         queues.append({"id": doc.id, "name": data.get("name"), "status": data.get("status")})
 
-    # ===== FIX: Pass office_name and office_id to template =====
     return render_template("createcounter.html",
                            counters=counters,
                            staff=staff,
@@ -110,17 +106,23 @@ def check_username():
     existing = db.collection("COUNTER_SESSIONS").where("Username", "==", username).limit(1).stream()
     return jsonify({"available": not any(existing), "username": username})
 
-# ---------- CREATE STAFF ----------
+# ---------- CREATE STAFF (with bcrypt & @counter.com) ----------
 @createcounterstaff.route("/create-staff", methods=["POST"])
 def create_staff():
     office_id = session.get("office_id")
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "")
     confirm = request.form.get("confirm_password", "")
-    queue_id = request.form.get("queue_id")  # may be empty string
+    queue_id = request.form.get("queue_id")
 
-    if not username or len(username) < 8:
-        return jsonify({"error": "Username must be at least 8 characters"}), 400
+    # --- Username domain validation ---
+    if not username.endswith("@counter.com"):
+        return jsonify({"error": "Username must end with '@counter.com'"}), 400
+    local_part = username.split("@")[0]
+    if len(local_part) < 8:
+        return jsonify({"error": "Local part of username must be at least 8 characters"}), 400
+
+    # --- Password validation ---
     if not password or not confirm:
         return jsonify({"error": "Password required"}), 400
     if password != confirm:
@@ -128,12 +130,14 @@ def create_staff():
     if len(password) < 8 or len(password) > 18 or not re.search(r"\d", password):
         return jsonify({"error": "Password must be 8-18 characters and contain at least one digit"}), 400
 
+    # --- Uniqueness check ---
     existing_user = db.collection("COUNTER_SESSIONS").where("Username", "==", username).limit(1).stream()
     if any(existing_user):
         return jsonify({"error": "Username already taken (global unique)"}), 400
 
     office_ref = db.collection("OFFICES").document(office_id)
 
+    # --- Counter assignment ---
     existing_counter_id = request.form.get("existing_counter_id")
     new_counter_name = request.form.get("counter_name", "").strip()
 
@@ -153,16 +157,20 @@ def create_staff():
     else:
         return jsonify({"error": "Either select existing counter or provide new counter name"}), 400
 
+    # --- Hash password ---
+    hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
     session_id = get_next_session_id()
     db.collection("COUNTER_SESSIONS").document(session_id).set({
         "Username": username,
-        "password": password,
+        "password": hashed_pw,          # bcrypt hash stored here (login.py expects 'password')
         "status": "active",
         "counterId": counter_ref,
         "officeId": office_ref,
         "createdAt": datetime.now()
     })
 
+    # --- Queue linking ---
     if queue_id and queue_id.strip():
         queue_ref = db.collection("QUEUES").document(queue_id)
         queue_snapshot = queue_ref.get()
@@ -176,7 +184,7 @@ def create_staff():
 
     return jsonify({"success": f"Staff '{username}' created with counter {counter_ref.id}"})
 
-# ---------- UPDATE STAFF ----------
+# ---------- UPDATE STAFF (with bcrypt) ----------
 @createcounterstaff.route("/update-staff/<doc_id>", methods=["POST"])
 def update_staff(doc_id):
     password = request.form.get("password")
@@ -187,12 +195,16 @@ def update_staff(doc_id):
     new_counter_name = request.form.get("new_counter_name", "").strip()
 
     update_data = {}
+
+    # --- Password update (if provided) ---
     if password:
         if password != confirm:
             return jsonify({"error": "Passwords do not match"}), 400
         if len(password) < 8 or len(password) > 18 or not re.search(r"\d", password):
             return jsonify({"error": "Password must be 8-18 chars and contain a digit"}), 400
-        update_data["password"] = password
+        hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        update_data["password"] = hashed_pw
+
     if status:
         update_data["status"] = status
 
@@ -202,6 +214,7 @@ def update_staff(doc_id):
         return jsonify({"error": "Staff not found"}), 404
     old_counter_ref = staff_doc.to_dict().get("counterId")
 
+    # --- Counter assignment ---
     if existing_counter_id:
         counter_ref = db.collection("COUNTERS").document(existing_counter_id)
         counter_doc = counter_ref.get()
@@ -221,11 +234,13 @@ def update_staff(doc_id):
     else:
         new_counter_ref = old_counter_ref
 
+    # --- Detach old counter from queues ---
     if old_counter_ref:
         old_queues = db.collection("QUEUES").where("counterId", "==", old_counter_ref).stream()
         for q in old_queues:
             q.reference.update({"counterId": None})
 
+    # --- Attach new counter to selected queue ---
     if queue_id and queue_id.strip():
         queue_ref = db.collection("QUEUES").document(queue_id)
         queue_snapshot = queue_ref.get()
