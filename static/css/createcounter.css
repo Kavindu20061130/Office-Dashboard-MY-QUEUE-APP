@@ -240,9 +240,10 @@
   transform: translateX(4px);
 }
 
-/* ===== MODAL ===== */
+/* ===== MODAL - INLINE FORM (NOT POPUP) ===== */
 .modal-backdrop {
-  margin: 1rem 0;
+  margin-top: 2rem;
+  transition: all 0.3s ease;
 }
 
 .modal-backdrop.hidden {
@@ -251,14 +252,26 @@
 
 .modal-backdrop.visible {
   display: block;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-card {
   background: white;
   border-radius: 28px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   border: 1px solid #e2e8f0;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 /* ===== TABS ===== */
@@ -626,7 +639,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1100;
   opacity: 0;
   visibility: hidden;
   transition: all 0.2s ease;
@@ -775,7 +788,7 @@
   padding: 10px 24px;
   border-radius: 40px;
   font-size: 0.85rem;
-  z-index: 1100;
+  z-index: 1200;
   opacity: 0;
   transition: opacity 0.2s;
   pointer-events: none;
@@ -791,6 +804,25 @@
 
 .toast.success {
   background: #147a33;
+}
+
+
+
+
+/* Loading Spinner */
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.6s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ===== RESPONSIVE ===== */

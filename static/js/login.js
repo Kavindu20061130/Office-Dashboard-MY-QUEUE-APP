@@ -20,25 +20,20 @@
         loginSubtitle: null,
         submitBtn: null,
         userLabel: null,
-        infoAlert: null
+        infoAlert: null,
+        loginForm: null          // <-- added reference to the form
     };
 
     // ==========================
     // Utility Functions
     // ==========================
     const utils = {
-        /**
-         * Safely get element by ID with console warning if missing
-         */
         getElement(id) {
             const el = document.getElementById(id);
             if (!el) console.warn(`Element with id "${id}" not found`);
             return el;
         },
 
-        /**
-         * Add CSS styles dynamically (self-contained)
-         */
         injectCloseButtonStyles() {
             if (document.getElementById('flash-close-styles')) return;
             const style = document.createElement('style');
@@ -68,9 +63,6 @@
             document.head.appendChild(style);
         },
 
-        /**
-         * Remove flash message with fade-out effect
-         */
         removeFlashMessage(flashElement) {
             flashElement.style.transition = 'opacity 0.3s ease';
             flashElement.style.opacity = '0';
@@ -82,12 +74,8 @@
     // Flash Message Handler
     // ==========================
     const FlashManager = {
-        /**
-         * Add close button to a single flash message
-         */
         addCloseButton(flashMsg) {
             if (flashMsg.querySelector('.flash-close-btn')) return;
-
             const closeBtn = document.createElement('span');
             closeBtn.innerHTML = '&times;';
             closeBtn.className = 'flash-close-btn';
@@ -96,20 +84,13 @@
                 e.stopPropagation();
                 utils.removeFlashMessage(flashMsg);
             });
-
             flashMsg.style.position = 'relative';
             flashMsg.appendChild(closeBtn);
         },
 
-        /**
-         * Initialize all existing flash messages and observe new ones
-         */
         init() {
             utils.injectCloseButtonStyles();
-            // Handle existing messages
             document.querySelectorAll('.custom-success, .custom-error').forEach(msg => this.addCloseButton(msg));
-
-            // Watch for dynamically added flash messages (e.g., after form submission)
             const observer = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     mutation.addedNodes.forEach((node) => {
@@ -128,12 +109,82 @@
     };
 
     // ==========================
+    // Submission Guard (prevents double submissions)
+    // ==========================
+    const SubmissionGuard = {
+        isSubmitting: false,
+
+        /**
+         * Disable submit button, show loading text
+         */
+        lockButton() {
+            if (!DOM.submitBtn) return false;
+            if (DOM.submitBtn.disabled) return false; // already locked
+            DOM.submitBtn.disabled = true;
+            DOM.submitBtn.textContent = 'Signing in...';
+            this.isSubmitting = true;
+            return true;
+        },
+
+        /**
+         * Re-enable submit button (called on error or after safety timeout)
+         */
+        unlockButton() {
+            if (!DOM.submitBtn) return;
+            DOM.submitBtn.disabled = false;
+            // Restore original text based on current role
+            const isAdmin = DOM.userRoleInput && DOM.userRoleInput.value === 'admin';
+            DOM.submitBtn.textContent = isAdmin ? 'Sign In as Admin' : 'Sign In to Counter';
+            this.isSubmitting = false;
+        },
+
+        /**
+         * Attach submit listener to the login form
+         */
+        init() {
+            DOM.loginForm = utils.getElement('loginForm');
+            if (!DOM.loginForm) {
+                console.warn('Login form not found – submission guard not active');
+                return;
+            }
+
+            DOM.loginForm.addEventListener('submit', (e) => {
+                // If already submitting, block this extra submission
+                if (this.isSubmitting || (DOM.submitBtn && DOM.submitBtn.disabled)) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // Lock the button immediately
+                this.lockButton();
+
+                // Safety net: re-enable after 10 seconds if something hangs
+                setTimeout(() => {
+                    if (this.isSubmitting) {
+                        console.warn('Submission timeout – re‑enabling button');
+                        this.unlockButton();
+                    }
+                }, 10000);
+
+                // Let the form submit naturally
+                return true;
+            });
+
+            // Also watch for failed submissions (flash error messages)
+            // When an error appears, re-enable the button
+            const observer = new MutationObserver(() => {
+                if (this.isSubmitting && document.querySelector('.custom-error')) {
+                    this.unlockButton();
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+    };
+
+    // ==========================
     // UI Controller
     // ==========================
     const UIController = {
-        /**
-         * Update displayed office ID
-         */
         updateOfficeID() {
             if (DOM.officeSelect && DOM.officeSelect.value) {
                 DOM.officeIdDisplay.textContent = `Office ID-${DOM.officeSelect.value}`;
@@ -142,18 +193,11 @@
             }
         },
 
-        /**
-         * Toggle between Admin and Counter role
-         */
         toggleRole(role) {
             if (!DOM.userRoleInput) return;
-
             DOM.userRoleInput.value = role;
-
-            // Clear sensitive fields
             if (DOM.userInput) DOM.userInput.value = '';
             if (DOM.passwordField) DOM.passwordField.value = '';
-
             const isAdmin = role === 'admin';
             DOM.loginTitle.innerText = isAdmin ? 'Office Admin Login' : 'Counter Login';
             DOM.loginSubtitle.innerText = isAdmin
@@ -167,36 +211,27 @@
                 : '🔒 Passwords for Counters are provided by your <b>Local Office Admin</b>.';
         },
 
-        /**
-         * Reset entire form to Counter login state
-         */
         resetToCounter() {
             if (DOM.roleCounter) DOM.roleCounter.checked = true;
             if (DOM.roleAdmin) DOM.roleAdmin.checked = false;
             this.toggleRole('counter');
-
             if (DOM.officeSelect) DOM.officeSelect.value = '';
             if (DOM.userInput) DOM.userInput.value = '';
             if (DOM.passwordField) DOM.passwordField.value = '';
             if (DOM.officeIdDisplay) DOM.officeIdDisplay.textContent = 'Office ID: Select to see ID';
-
-            // Clear stored session artifacts
             sessionStorage.removeItem('userRole');
             sessionStorage.removeItem('userToken');
             localStorage.removeItem('rememberedRole');
+            // Also reset submission guard if it was locked
+            if (SubmissionGuard.isSubmitting) SubmissionGuard.unlockButton();
         },
 
-        /**
-         * Animate stat counters
-         */
         startStatCounters() {
             const counters = document.querySelectorAll('.stat-number');
             const speed = 200;
-
             counters.forEach(counter => {
                 const target = parseInt(counter.getAttribute('data-target'), 10);
                 if (isNaN(target)) return;
-
                 let current = 0;
                 const increment = target / speed;
                 const update = () => {
@@ -217,15 +252,11 @@
     // Data Service
     // ==========================
     const OfficeService = {
-        /**
-         * Fetch offices from backend and populate select
-         */
         async loadOffices() {
             try {
                 const response = await fetch('/get-offices');
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const offices = await response.json();
-
                 if (!DOM.officeSelect) return;
                 DOM.officeSelect.innerHTML = '<option value="">-- Select Office --</option>';
                 offices.forEach(office => {
@@ -244,12 +275,9 @@
     };
 
     // ==========================
-    // Event Handlers (Delegation)
+    // Event Handlers
     // ==========================
     const EventHandlers = {
-        /**
-         * Handle role radio changes
-         */
         onRoleChange(e) {
             const target = e.target;
             if (target.id === 'roleCounter' && target.checked) {
@@ -259,18 +287,12 @@
             }
         },
 
-        /**
-         * Handle office selection change
-         */
         onOfficeChange() {
             UIController.updateOfficeID();
         },
 
-        /**
-         * Handle browser back/forward navigation
-         */
         onPageShow(event) {
-            if (event.persisted || performance.getEntriesByType('navigation')[0]?.type === 'back_forward') {
+            if (event.persisted || (performance.getEntriesByType('navigation')[0]?.type === 'back_forward')) {
                 UIController.resetToCounter();
             }
         },
@@ -298,25 +320,18 @@
         DOM.userLabel = utils.getElement('userLabel');
         DOM.infoAlert = utils.getElement('infoAlert');
 
-        // Load offices
         await OfficeService.loadOffices();
-
-        // Reset UI to counter state
         UIController.resetToCounter();
-
-        // Handle flash messages (add close buttons, observe new ones)
         FlashManager.init();
 
-        // Check for logout flash message to reset UI
         const hasLogout = Array.from(document.querySelectorAll('.custom-success, .custom-error')).some(
             msg => msg.textContent.includes('Logged out successfully')
         );
         if (hasLogout) UIController.resetToCounter();
 
-        // Start animations
         UIController.startStatCounters();
 
-        // Set up event listeners (delegation where possible)
+        // Set up event listeners
         if (DOM.roleCounter && DOM.roleAdmin) {
             document.querySelector('.role-selector')?.addEventListener('change', EventHandlers.onRoleChange);
         }
@@ -324,12 +339,13 @@
             DOM.officeSelect.addEventListener('change', EventHandlers.onOfficeChange);
         }
 
-        // Handle browser navigation
         window.addEventListener('pageshow', EventHandlers.onPageShow);
         window.addEventListener('popstate', EventHandlers.onPopState);
+
+        // ✅ Initialize submission guard (prevents double submission)
+        SubmissionGuard.init();
     }
 
-    // Start only after DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
