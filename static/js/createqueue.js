@@ -1,5 +1,6 @@
 /* ═══════════════════════════════════════════════
    createqueue.js — Queue & Service Management
+   FINAL WORKING VERSION
 ═══════════════════════════════════════════════ */
 
 /* ══════════════════════════════════════════
@@ -8,6 +9,7 @@
 function selectMode(mode) {
   const scene    = document.getElementById('landingScene');
   const backdrop = document.getElementById('modalBackdrop');
+  const backBtn  = document.getElementById('backToMenuBtn');
 
   // Animate scene out
   if (scene) scene.classList.add('out');
@@ -19,9 +21,33 @@ function selectMode(mode) {
       backdrop.classList.remove('hidden');
       backdrop.classList.add('visible');
     }
+    // Show back button
+    if (backBtn) backBtn.style.display = 'block';
     // Switch to the correct tab
     switchTab(mode);
   }, 420);
+}
+
+/* ─── Go back to menu (choice screen) ─── */
+function goBackToMenu() {
+  const scene    = document.getElementById('landingScene');
+  const backdrop = document.getElementById('modalBackdrop');
+  const backBtn  = document.getElementById('backToMenuBtn');
+
+  // Hide form card
+  if (backdrop) {
+    backdrop.classList.remove('visible');
+    backdrop.classList.add('hidden');
+  }
+  
+  // Hide back button
+  if (backBtn) backBtn.style.display = 'none';
+  
+  // Show landing scene
+  if (scene) {
+    scene.style.display = 'flex';
+    scene.classList.remove('out');
+  }
 }
 
 /* If coming back from a success redirect (success_data present),
@@ -31,8 +57,13 @@ function checkAutoOpen() {
   if (el && el.dataset.queueName) {
     const scene    = document.getElementById('landingScene');
     const backdrop = document.getElementById('modalBackdrop');
+    const backBtn  = document.getElementById('backToMenuBtn');
     if (scene)    scene.style.display = 'none';
-    if (backdrop) { backdrop.classList.remove('hidden'); backdrop.classList.add('visible'); }
+    if (backdrop) { 
+      backdrop.classList.remove('hidden'); 
+      backdrop.classList.add('visible'); 
+    }
+    if (backBtn) backBtn.style.display = 'block';
     switchTab('queue');
   }
 }
@@ -108,7 +139,7 @@ function initTokenPreview() {
     const L = letter.value || 'A';
     const S = parseInt(startNum.value, 10) || 1;
     const M = Math.max(1, parseInt(maxCap.value, 10) || 50);
-    preview.textContent = L + '-' + pad(S) + '  \u2192  ' + L + '-' + pad(S + M - 1);
+    preview.textContent = L + '-' + pad(S) + '  →  ' + L + '-' + pad(S + M - 1);
   }
   letter.addEventListener('change', update);
   startNum.addEventListener('input', update);
@@ -134,9 +165,9 @@ function showQueueSuccessPopup(data) {
   const overlay = document.getElementById('successOverlay');
   if (!overlay) return;
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('popupQueueName',    data.queueName    || '\u2014');
-  set('popupQueueIds',     data.queueIds     || '\u2014');
-  set('popupCounterCount', data.counterCount || '\u2014');
+  set('popupQueueName',    data.queueName    || '—');
+  set('popupQueueIds',     data.queueIds     || '—');
+  set('popupCounterCount', data.counterCount || '—');
   set('popupCreatedAt',    new Date().toLocaleString());
   overlay.classList.add('active');
   const flashes = document.querySelector('.flash-messages');
@@ -154,8 +185,8 @@ function showServiceSuccessPopup(data) {
   const overlay = document.getElementById('serviceSuccessOverlay');
   if (!overlay) return;
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('svcPopupId',     data.service_id || '\u2014');
-  set('svcPopupName',   data.name       || '\u2014');
+  set('svcPopupId',     data.service_id || '—');
+  set('svcPopupName',   data.name       || '—');
   set('svcPopupCharge', 'LKR ' + (data.charge || 0).toLocaleString());
   set('svcPopupAt',     new Date().toLocaleString());
   overlay.classList.add('active');
@@ -193,7 +224,7 @@ function initServiceForm() {
     }
 
     const origHTML      = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<span class="loading-spinner"></span>&nbsp;Creating\u2026';
+    submitBtn.innerHTML = '<span class="loading-spinner"></span> Creating...';
     submitBtn.disabled  = true;
 
     try {
@@ -212,7 +243,7 @@ function initServiceForm() {
         showToast(data.error || 'Failed to create service', 'error');
       }
     } catch (err) {
-      showToast('Network error \u2014 please try again', 'error');
+      showToast('Network error — please try again', 'error');
     } finally {
       submitBtn.innerHTML = origHTML;
       submitBtn.disabled  = false;
