@@ -127,13 +127,25 @@ _offices_cache = {"data": None, "timestamp": 0, "ttl": 300}
 
 def get_cached_offices():
     now = time.time()
+
     if _offices_cache["data"] and (now - _offices_cache["timestamp"]) < _offices_cache["ttl"]:
         return _offices_cache["data"]
-    offices_ref = db.collection("OFFICES").select(["name"]).stream()
-    office_list = [{"id": doc.id, "name": doc.get("name") or "No Name"} for doc in offices_ref]
+
+    offices_ref = db.collection("OFFICES").stream()
+
+    office_list = []
+    for doc in offices_ref:
+        data = doc.to_dict() or {}
+        office_list.append({
+            "id": doc.id,
+            "name": data.get("name", "No Name")
+        })
+
     _offices_cache["data"] = office_list
     _offices_cache["timestamp"] = now
     return office_list
+
+    
 
 def no_cache(response):
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
