@@ -65,9 +65,9 @@ def create_queue_page():
         # Get success data from session if exists
         success_data = session.pop('queue_success_data', None)
         
-        # Fetch all services
+        # Fetch only services belonging to this office
         services = []
-        for doc in db.collection("SERVICES").stream():
+        for doc in db.collection("SERVICES").where("officeId", "==", office_ref).stream():
             data = doc.to_dict()
             services.append({
                 "id": doc.id,
@@ -117,6 +117,7 @@ def create_queue_page():
             new_service_data = {
                 "name": custom_name,
                 "charge": int(custom_charge),
+                "officeId": office_ref,
                 "createdAt": SERVER_TIMESTAMP
             }
             service_ref = db.collection("SERVICES").document(new_service_id)

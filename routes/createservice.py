@@ -13,7 +13,7 @@ def get_next_service_id():
 
     max_num = 0
     for doc in docs:
-        match = re.match(r'^service_(\d+)$', doc.id)   # ✅ stricter regex
+        match = re.match(r'^service_(\d+)$', doc.id)
         if match:
             num = int(match.group(1))
             if num > max_num:
@@ -49,6 +49,12 @@ def create_service():
         except ValueError:
             return jsonify({"success": False, "error": "Invalid charge value."})
 
+        # ---------- Get office reference from session ----------
+        office_id = session.get("office_id")
+        if not office_id:
+            return jsonify({"success": False, "error": "Office not found in session."})
+        office_ref = db.collection("OFFICES").document(office_id)
+
         # ---------- Generate ID ----------
         new_id = get_next_service_id()
 
@@ -56,6 +62,7 @@ def create_service():
         db.collection("SERVICES").document(new_id).set({
             "name": name,
             "charge": charge_int,
+            "officeId": office_ref,   # ← FIXED: saves as Firestore Reference
             "createdAt": SERVER_TIMESTAMP
         })
 
