@@ -62,14 +62,21 @@
             <a href="{{ url_for('qr_scanner.scanner_page') }}" class="nav-item">
                 <i class="fa-solid fa-qrcode"></i>
                 <span>QR Scanner</span>
+
+            </a>
+            <a href="{{ url_for('history.history_page') }}"
+                class="nav-item {% if request.endpoint == 'history.history_page' %}active{% endif %}">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>History</span>
             </a>
 
-            
             <a href="{{ url_for('reports.reports_page') }}" class="nav-item">
                 <i class="fa-solid fa-chart-simple"></i>
                 <span>Reports</span>
             </a>
         </div>
+
+
 
         <div class="user-card">
             <div class="avatar">

@@ -54,7 +54,6 @@ function toggleSound() {
             btn.style.background = "#64748b";
         }
     }
-    // Optional: short beep to confirm sound is working
     if (soundEnabled) playBeep();
 }
 
@@ -110,6 +109,7 @@ async function fetchAndRenderLists() {
         const waitData = await waitRes.json();
         const container = document.getElementById("waitingTokensList");
         const searchTerm = document.getElementById("searchWaiting")?.value.toLowerCase() || "";
+        
         if (!waitData.waiting || waitData.waiting.length === 0) {
             container.innerHTML = '<div class="text-muted">No waiting tokens</div>';
         } else {
@@ -123,18 +123,36 @@ async function fetchAndRenderLists() {
             if (filtered.length === 0) {
                 container.innerHTML = '<div class="text-muted">No matching tokens</div>';
             } else {
-                container.innerHTML = filtered.map(t => `
-                    <div class="token-item ${t.arrivedtime ? 'arrived' : 'waiting'}">
-                        <div class="token-number">
-                            ${escapeHtml(t.tokenNumber)}
-                            <span class="badge ${t.arrivedtime ? 'badge-arrived' : 'badge-waiting'}">
-                                ${t.arrivedtime ? 'Arrived' : 'Waiting'}
-                            </span>
+                container.innerHTML = filtered.map(t => {
+                    let badgeClass = '';
+                    let badgeText = '';
+                    let extraHtml = '';
+                    
+                    // Check if token is cancelled
+                    if (t.status === 'cancelled') {
+                        badgeClass = 'badge-cancelled';
+                        badgeText = 'Cancelled';
+                        // No arrival time shown for cancelled tokens
+                    } else if (t.arrivedTime) {
+                        badgeClass = 'badge-arrived';
+                        badgeText = 'Arrived';
+                        extraHtml = `<div class="token-time">Arrived: ${formatTime(t.arrivedTime)}</div>`;
+                    } else {
+                        badgeClass = 'badge-waiting';
+                        badgeText = 'Waiting';
+                    }
+                    
+                    return `
+                        <div class="token-item ${t.arrivedTime ? 'arrived' : 'waiting'} ${t.status === 'cancelled' ? 'cancelled' : ''}">
+                            <div class="token-number">
+                                ${escapeHtml(t.tokenNumber)}
+                                <span class="badge ${badgeClass}">${badgeText}</span>
+                            </div>
+                            <div class="token-service">${escapeHtml(t.serviceName)}</div>
+                            ${extraHtml}
                         </div>
-                        <div class="token-service">${escapeHtml(t.serviceName)}</div>
-                        ${t.arrivedtime ? `<div class="token-time">Arrived: ${formatTime(t.arrivedtime)}</div>` : ''}
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
 
@@ -149,7 +167,7 @@ async function fetchAndRenderLists() {
                 <div class="token-item" style="border-left-color: #94a3b8;">
                     <div class="token-number">${escapeHtml(t.tokenNumber)}</div>
                     <div class="token-service">${escapeHtml(t.serviceName)}</div>
-                    ${t.servedtime ? `<div class="token-time">Served: ${formatTime(t.servedtime)}</div>` : ''}
+                    ${t.servedTime ? `<div class="token-time">Served: ${formatTime(t.servedTime)}</div>` : ''}
                 </div>
             `).join('');
         }
@@ -195,11 +213,23 @@ async function processScan(tokenId) {
     scanInProgress = true;
     try {
         const info = await getTokenInfo(tokenId);
+        
+        // ❌ Check for cancelled token first
+        if (info.status === "cancelled") {
+            showModal(
+                "Cancelled Token",
+                "error",
+                `<div class="error-text">This token is cancelled. Service cannot be provided. Please book another.</div>`
+            );
+            return;
+        }
+        
         if (info.status === "served") {
             showModal("Already Served", "error", `<div class="error-text">Token "${escapeHtml(tokenId)}" was already served.</div>`);
             return;
         }
-        if (info.arrivedtime) {
+        
+        if (info.arrivedTime) {
             const serveResult = await handleSecondScan(tokenId);
             const waitTime = serveResult.waitTime || "calculated";
             const detailsHtml = `<div class="wait-time">⏱️ Waiting time: <strong>${escapeHtml(waitTime)}</strong></div>`;
@@ -212,7 +242,7 @@ async function processScan(tokenId) {
                 <div class="detail-row"><span class="detail-label">Token Number</span><span class="detail-value">${escapeHtml(token.tokenNumber)}</span></div>
                 <div class="detail-row"><span class="detail-label">Service</span><span class="detail-value">${escapeHtml(token.serviceName)}</span></div>
                 <div class="detail-row"><span class="detail-label">Queue</span><span class="detail-value">${escapeHtml(token.queueName)} (${escapeHtml(token.queueType)})</span></div>
-                <div class="detail-row"><span class="detail-label">Arrived Time</span><span class="detail-value">${formatTime(token.arrivedtime)}</span></div>
+                <div class="detail-row"><span class="detail-label">Arrived Time</span><span class="detail-value">${formatTime(token.arrivedTime)}</span></div>
             `;
             showModal("✅ Arrival Recorded", "success", detailsHtml, "Scan again to complete service.");
             fetchAndRenderLists();
@@ -250,7 +280,6 @@ function onScanError(err) {
 async function getCameraDevices() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        // User granted permission – init audio now (user gesture)
         initAudio();
         stream.getTracks().forEach(track => track.stop());
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -322,7 +351,6 @@ async function startScanner() {
     } catch (err) {
         console.error("Camera start error", err);
         showModal("Camera Error", "error", `<div class="error-text">Failed to start camera: ${escapeHtml(err.message || err)}. Please check your camera connection or select another camera.</div>`);
-        // Try fallback to default camera
         try {
             await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
             scannerInstance = html5QrCode;

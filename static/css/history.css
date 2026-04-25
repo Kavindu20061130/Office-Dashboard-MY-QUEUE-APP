@@ -1,0 +1,362 @@
+/* History Page Styles */
+.history-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+    color: #64748b;
+}
+
+.breadcrumb a {
+    color: #147a33;
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.page-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.5rem;
+}
+
+.page-header h1 i {
+    color: #147a33;
+    margin-right: 10px;
+}
+
+.page-header p {
+    color: #475569;
+    margin-bottom: 1.5rem;
+}
+
+/* Filters Card */
+.filters-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 0.4rem;
+}
+
+.filter-group select,
+.filter-group input {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    background: white;
+    transition: 0.2s;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+    outline: none;
+    border-color: #147a33;
+    box-shadow: 0 0 0 3px rgba(20, 122, 51, 0.1);
+}
+
+.search-section {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 1.5rem;
+}
+
+.search-type {
+    min-width: 150px;
+}
+
+.search-type label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 0.4rem;
+    display: block;
+}
+
+.search-input {
+    display: flex;
+    gap: 0.8rem;
+    flex: 1;
+    flex-wrap: wrap;
+}
+
+.search-input input {
+    flex: 1;
+    padding: 0.6rem 0.8rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    min-width: 200px;
+}
+
+.btn-primary {
+    background: #147a33;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 40px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-primary:hover {
+    background: #0f5f27;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #e2e8f0;
+    color: #334155;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 40px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #cbd5e1;
+}
+
+/* Table Styles */
+.tokens-table-wrapper {
+    background: white;
+    border-radius: 20px;
+    overflow-x: auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+}
+
+.tokens-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.tokens-table th {
+    text-align: left;
+    padding: 1rem 1rem;
+    background: #f8fafc;
+    font-weight: 700;
+    color: #1e293b;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.tokens-table td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.tokens-table tr:hover {
+    background: #fefce8;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border-radius: 40px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.status-served {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-skipped {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.action-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.action-btn:hover {
+    background: #2563eb;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 3rem;
+    color: #94a3b8;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 500px;
+    overflow: hidden;
+    animation: modalPop 0.2s ease;
+}
+
+@keyframes modalPop {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #94a3b8;
+}
+
+.close-modal:hover {
+    color: #ef4444;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.token-details-preview {
+    background: #f1f5f9;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+}
+
+/* Form group for datetime picker */
+.form-group {
+    margin-top: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 0.5rem;
+}
+
+.modal-input {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    background: white;
+    transition: 0.2s;
+}
+
+.modal-input:focus {
+    outline: none;
+    border-color: #147a33;
+    box-shadow: 0 0 0 3px rgba(20, 122, 51, 0.1);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.8rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 768px) {
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+    .search-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .tokens-table th, .tokens-table td {
+        padding: 0.6rem;
+    }
+    .modal-content {
+        max-width: 95%;
+    }
+}

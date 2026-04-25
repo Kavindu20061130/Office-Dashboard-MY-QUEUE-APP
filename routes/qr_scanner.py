@@ -22,6 +22,13 @@ def get_admin_office_id():
             return get_doc_id(office_ref)
     return None
 
+def get_today_range_utc():
+    tz = pytz.timezone('Asia/Colombo')
+    now = datetime.now(tz)
+    today_start = datetime(now.year, now.month, now.day, 0, 0, 0, tzinfo=tz)
+    today_end = datetime(now.year, now.month, now.day, 23, 59, 59, 999999, tzinfo=tz)
+    return today_start.astimezone(timezone.utc), today_end.astimezone(timezone.utc)
+
 def get_next_analytics_id():
     docs = db.collection("QUEUE_ANALYTICS").stream()
     max_num = 0
@@ -48,27 +55,21 @@ def compute_wait_time(arrived_dt, served_dt):
     return f"{hours} hr{'s' if hours != 1 else ''} {mins} min{'s' if mins != 1 else ''}"
 
 def get_arrival_time(token_data):
-    if token_data.get("arrivedtime"):
-        return token_data["arrivedtime"]
-    if token_data.get("arrivedTime"):
-        return token_data["arrivedTime"]
-    return None
+    """Read arrivedTime (camelCase) only. Falls back to lowercase for legacy docs."""
+    return token_data.get("arrivedTime") or token_data.get("arrivedtime")
 
 def set_arrival_time(token_ref, now_utc):
-    token_ref.update({
-        "arrivedtime": now_utc,
-        "arrivedTime": now_utc
-    })
+    """Write ONLY camelCase arrivedTime."""
+    token_ref.update({"arrivedTime": now_utc})
 
 # ---------------------------
-# Page route (FIXED: passes office details to sidebar)
+# Page route
 # ---------------------------
 @qr_scanner.route("/admin/scanner")
 def scanner_page():
     if not session.get("user_id") or session.get("role") not in ["admin", "operator"]:
         return "Unauthorized", 401
 
-    # Get office details for sidebar
     office_id = get_admin_office_id()
     office_name = None
     if office_id:
@@ -81,7 +82,7 @@ def scanner_page():
                            office_id=office_id)
 
 # ---------------------------
-# Get token info (no modification)
+# Get token info
 # ---------------------------
 @qr_scanner.route("/api/qr/token-info/<token_id>", methods=["GET"])
 def token_info(token_id):
@@ -122,14 +123,14 @@ def token_info(token_id):
         "tokenId": token_id,
         "tokenNumber": token_data.get("tokenNumber", ""),
         "status": token_data.get("status", ""),
-        "arrivedtime": arrival_ts.timestamp() if arrival_ts else None,
+        "arrivedTime": arrival_ts.timestamp() if arrival_ts else None,
         "serviceName": service_name,
         "queueName": queue_name,
         "queueType": queue_type
     })
 
 # ---------------------------
-# Mark arrived (sets both field names)
+# Mark arrived
 # ---------------------------
 @qr_scanner.route("/api/qr/arrive", methods=["POST"])
 def qr_arrive():
@@ -153,6 +154,9 @@ def qr_arrive():
     if token_office_id != admin_office_id:
         return jsonify({"error": "failed due to QR is Wrong"}), 403
 
+    if token_data.get("status") == "cancelled":
+        return jsonify({"error": "This token is cancelled. Service cannot be provided. Please book another."}), 400
+
     if token_data.get("status") == "served":
         return jsonify({"error": f"Token '{token_id}' was already served."}), 400
 
@@ -161,8 +165,6 @@ def qr_arrive():
 
     now_utc = datetime.now(timezone.utc)
     set_arrival_time(token_ref, now_utc)
-    token_data["arrivedtime"] = now_utc
-    token_data["arrivedTime"] = now_utc
 
     service_name = ""
     service_ref = token_data.get("serviceId")
@@ -191,12 +193,12 @@ def qr_arrive():
             "queueName": queue_name,
             "queueType": queue_type,
             "status": token_data.get("status", "waiting"),
-            "arrivedtime": now_utc.timestamp()
+            "arrivedTime": now_utc.timestamp()
         }
     })
 
 # ---------------------------
-# Mark served + calculate wait time
+# Mark served
 # ---------------------------
 @qr_scanner.route("/api/qr/serve", methods=["POST"])
 def qr_serve():
@@ -220,6 +222,9 @@ def qr_serve():
     if token_office_id != admin_office_id:
         return jsonify({"error": "failed due to QR is Wrong"}), 403
 
+    if token_data.get("status") == "cancelled":
+        return jsonify({"error": "This token is cancelled. Service cannot be provided. Please book another."}), 400
+
     if token_data.get("status") == "served":
         return jsonify({"error": f"Token '{token_id}' was already served."}), 400
 
@@ -230,14 +235,10 @@ def qr_serve():
     served_time = datetime.now(timezone.utc)
     token_ref.update({
         "status": "served",
-        "servedtime": SERVER_TIMESTAMP
+        "servedTime": SERVER_TIMESTAMP
     })
 
-    if hasattr(arrived_time, 'timestamp'):
-        arrived_dt = arrived_time
-    else:
-        arrived_dt = arrived_time
-    wait_str = compute_wait_time(arrived_dt, served_time)
+    wait_str = compute_wait_time(arrived_time, served_time)
 
     analytics_id = get_next_analytics_id()
     queue_ref = token_data.get("queueId")
@@ -265,7 +266,7 @@ def qr_serve():
     })
 
 # ---------------------------
-# Waiting tokens – using DocumentReference
+# Waiting tokens – today only
 # ---------------------------
 @qr_scanner.route("/api/qr/waiting-tokens", methods=["GET"])
 def waiting_tokens():
@@ -277,13 +278,27 @@ def waiting_tokens():
         return jsonify({"error": "No office assigned"}), 400
 
     office_ref = db.collection("OFFICES").document(admin_office_id)
+    start_utc, end_utc = get_today_range_utc()
     tokens_ref = db.collection("TOKENS").where("officeId", "==", office_ref).stream()
 
     waiting = []
     for doc in tokens_ref:
         data = doc.to_dict()
+
         if data.get("status") == "served":
             continue
+
+        # Read bookedTime (camelCase preferred, lowercase fallback for legacy)
+        booked = data.get("bookedTime") or data.get("bookedtime")
+        if not booked:
+            continue
+        if hasattr(booked, 'timestamp'):
+            booked_dt = datetime.fromtimestamp(booked.timestamp(), tz=timezone.utc)
+        else:
+            booked_dt = booked
+        if not (start_utc <= booked_dt <= end_utc):
+            continue
+
         service_name = ""
         service_ref = data.get("serviceId")
         if service_ref:
@@ -293,6 +308,7 @@ def waiting_tokens():
                 s_doc = db.collection("SERVICES").document(get_doc_id(service_ref)).get()
             if s_doc.exists:
                 service_name = s_doc.to_dict().get("name", "")
+
         arrival_ts = get_arrival_time(data)
         waiting.append({
             "id": doc.id,
@@ -300,13 +316,14 @@ def waiting_tokens():
             "serviceName": service_name,
             "status": data.get("status", "waiting"),
             "position": data.get("position", 0),
-            "arrivedtime": arrival_ts.timestamp() if arrival_ts else None
+            "arrivedTime": arrival_ts.timestamp() if arrival_ts else None
         })
+
     waiting.sort(key=lambda x: x["position"])
     return jsonify({"waiting": waiting})
 
 # ---------------------------
-# Recent scans – using DocumentReference
+# Recent scans – today only
 # ---------------------------
 @qr_scanner.route("/api/qr/recent-scans", methods=["GET"])
 def recent_scans():
@@ -318,6 +335,7 @@ def recent_scans():
         return jsonify({"error": "No office assigned"}), 400
 
     office_ref = db.collection("OFFICES").document(admin_office_id)
+    start_utc, end_utc = get_today_range_utc()
     tokens_ref = db.collection("TOKENS").where("officeId", "==", office_ref).stream()
 
     served = []
@@ -325,9 +343,19 @@ def recent_scans():
         data = doc.to_dict()
         if data.get("status") != "served":
             continue
-        served_time = data.get("servedtime")
+
+        # Read servedTime (camelCase preferred, lowercase fallback)
+        served_time = data.get("servedTime") or data.get("servedtime")
         if served_time is None:
             continue
+
+        if hasattr(served_time, 'timestamp'):
+            served_dt = datetime.fromtimestamp(served_time.timestamp(), tz=timezone.utc)
+        else:
+            served_dt = served_time
+        if not (start_utc <= served_dt <= end_utc):
+            continue
+
         service_name = ""
         service_ref = data.get("serviceId")
         if service_ref:
@@ -337,11 +365,12 @@ def recent_scans():
                 s_doc = db.collection("SERVICES").document(get_doc_id(service_ref)).get()
             if s_doc.exists:
                 service_name = s_doc.to_dict().get("name", "")
+
         served.append({
             "id": doc.id,
             "tokenNumber": data.get("tokenNumber", ""),
             "serviceName": service_name,
-            "servedtime": served_time.timestamp(),
+            "servedTime": served_time.timestamp(),
             "_raw_dt": served_time
         })
 

@@ -280,9 +280,12 @@ async function loadTokens(counterId) {
                         <div class="detail-row"><span class="detail-label">Position:</span> ${token.position}</div>
                     </div>
                     <div class="token-actions">
-                        <button class="token-btn serve-btn" onclick="actionToken('serve', '${token.id}')"><i class="fas fa-check"></i> Serve</button>
-                        <button class="token-btn skip-btn" onclick="actionToken('skip', '${token.id}')"><i class="fas fa-times"></i> Skip</button>
-                        <button class="token-btn arrival-btn" onclick="openArrivalModal('${token.id}')"><i class="fas fa-clock"></i> Set Arrival</button>
+                        ${token.status === 'cancelled' ? 
+                            `<button class="token-btn close-btn" onclick="closeToken('${token.id}')"><i class="fas fa-times-circle"></i> Close</button>` :
+                            `<button class="token-btn serve-btn" onclick="actionToken('serve', '${token.id}')"><i class="fas fa-check"></i> Serve</button>
+                             <button class="token-btn skip-btn" onclick="actionToken('skip', '${token.id}')"><i class="fas fa-times"></i> Skip</button>
+                             <button class="token-btn arrival-btn" onclick="openArrivalModal('${token.id}')"><i class="fas fa-clock"></i> Set Arrival</button>`
+                        }
                     </div>
                 </div>
             `;
@@ -308,7 +311,7 @@ function getTokenDataFromCard(tokenId) {
     return null;
 }
 
-// Token actions
+// Token actions (Serve / Skip)
 window.actionToken = async function(action, tokenId) {
     let title, message, type, confirmText;
     const tokenData = getTokenDataFromCard(tokenId);
@@ -345,6 +348,32 @@ window.actionToken = async function(action, tokenId) {
                 if (currentCounterId) loadTokens(currentCounterId);
             } else {
                 showToast('Error: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (err) {
+            showToast('Network error: ' + err.message, 'error');
+        }
+    }
+};
+
+// Close cancelled token (new)
+window.closeToken = async function(tokenId) {
+    const tokenData = getTokenDataFromCard(tokenId);
+    const confirmed = await showConfirmModal({
+        title: '<i class="fas fa-times-circle"></i> Close Cancelled Token',
+        message: `This token has been cancelled. Closing it will remove it from the active list permanently. Are you sure?`,
+        type: 'warning',
+        confirmText: 'Yes, Close Token',
+        token: tokenData
+    });
+    if (confirmed) {
+        try {
+            const res = await fetch(`/admin/api/token/${tokenId}/close`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Cancelled token closed successfully.', 'success');
+                if (currentCounterId) loadTokens(currentCounterId);
+            } else {
+                showToast('Error: ' + (data.error || 'Failed to close token'), 'error');
             }
         } catch (err) {
             showToast('Network error: ' + err.message, 'error');
