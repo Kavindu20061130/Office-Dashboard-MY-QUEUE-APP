@@ -39,10 +39,8 @@ function toggleScroll() {
     }
 }
 
-// Listen to scroll events
 if (mainContainer) {
     mainContainer.addEventListener('scroll', updateScrollButtonState);
-    // Initial check after content loads
     setTimeout(updateScrollButtonState, 500);
 }
 
@@ -87,40 +85,32 @@ async function loadData(showLoadingIndicator = false) {
             return;
         }
 
-        // Update info cards
         const officeName = data.officeName || "N/A";
         const counterName = data.counterName || "N/A";
         
         document.getElementById("office").textContent = officeName;
         document.getElementById("counter").textContent = counterName;
         
-        // Update sidebar
         const sideOfficeName = document.getElementById("sidebar-office-name");
         if (sideOfficeName) sideOfficeName.textContent = officeName;
 
-        // Check if queue exists
         if (!data.hasQueue || !data.queueName) {
-            // No queue assigned - show admin message
             const queueElement = document.getElementById("queue");
             queueElement.textContent = "⚠️ No Queue Assigned";
             queueElement.style.color = "#f59e0b";
             queueElement.style.fontWeight = "600";
             
-            // Update serving banner
             const servingQueueEl = document.getElementById("servingQueue");
             if (servingQueueEl) servingQueueEl.textContent = "NO QUEUE ASSIGNED";
             
-            // Show message in serving card
             document.getElementById("servingToken").textContent = "!--";
             document.getElementById("servingName").innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> No Queue Assigned';
             document.getElementById("servingMeta").innerHTML = 'Please contact your administrator to assign a queue to this counter';
             
-            // Disable all action buttons
             document.getElementById("completeBtn").disabled = true;
             document.getElementById("skipBtn").disabled = true;
             document.getElementById("cancelBtn").disabled = true;
             
-            // Show message in table
             const tbody = document.getElementById("tableBody");
             tbody.innerHTML = `
                 <tr>
@@ -143,13 +133,11 @@ async function loadData(showLoadingIndicator = false) {
             return;
         }
         
-        // Queue exists - normal flow
         const queueElement = document.getElementById("queue");
         queueElement.textContent = data.queueName;
-        queueElement.style.color = ""; // Reset color
+        queueElement.style.color = "";
         queueElement.style.fontWeight = "";
         
-        // Update serving banner queue label
         const servingQueueEl = document.getElementById("servingQueue");
         if (servingQueueEl) servingQueueEl.textContent = data.queueName.toUpperCase();
         
@@ -157,8 +145,8 @@ async function loadData(showLoadingIndicator = false) {
         renderTable(tokens);
         renderServingCard(tokens);
         
-        // Enable buttons if tokens exist
-        if (tokens.length > 0) {
+        const hasActionableTokens = tokens.some(t => t.status !== 'cancelled' && t.status !== 'served' && t.status !== 'skipped');
+        if (hasActionableTokens) {
             document.getElementById("completeBtn").disabled = false;
             document.getElementById("skipBtn").disabled = false;
             document.getElementById("cancelBtn").disabled = false;
@@ -178,7 +166,6 @@ async function loadData(showLoadingIndicator = false) {
     } finally {
         isUpdating = false;
         if (showLoadingIndicator) hideLoading();
-        // Refresh scroll button state after table updates
         setTimeout(updateScrollButtonState, 100);
     }
 }
@@ -192,8 +179,7 @@ function renderServingCard(tokens) {
     const skipBtn     = document.getElementById("skipBtn");
     const cancelBtn   = document.getElementById("cancelBtn");
 
-    // Find the actively serving token (first non-skipped, non-served)
-    const serving = tokens.find(t => t.status !== "skipped" && t.status !== "served");
+    const serving = tokens.find(t => t.status !== "skipped" && t.status !== "served" && t.status !== "cancelled");
 
     if (!serving) {
         tokenBadge.textContent = "--";
@@ -211,7 +197,7 @@ function renderServingCard(tokens) {
     tokenBadge.textContent = serving.tokenNumber || "--";
     servingName.textContent = `${counterName()} • ${serving.serviceName || "Service"}`;
 
-    const startedAt = formatTimeShort(serving.bookedtime);
+    const startedAt = formatTimeShort(serving.bookedTime);
     servingMeta.textContent = `Service: ${serving.serviceName || "—"} • Started: ${startedAt}`;
 
     completeBtn.disabled = false;
@@ -235,7 +221,7 @@ function renderTable(tokens) {
     let html = "";
     tokens.forEach((t, idx) => {
         let displayStatus = t.status || "waiting";
-        const isFirst = idx === 0 && displayStatus !== "skipped" && displayStatus !== "served";
+        const isFirst = idx === 0 && displayStatus !== "skipped" && displayStatus !== "served" && displayStatus !== "cancelled";
         const isSecond = idx === 1 && displayStatus === "waiting";
 
         if (isFirst)  displayStatus = "serving";
@@ -244,11 +230,13 @@ function renderTable(tokens) {
         const rowClass = isFirst ? "row-serving" : isSecond ? "row-next" : "";
         const tokenClass = isFirst ? "token-link" : "token-link next-token";
 
-        // Arrived cell
+        // Arrived cell: for cancelled tokens, show "—" (no arrival button)
         let arrivedHtml = "";
-        if (t.arrivedtime) {
+        if (t.status === 'cancelled') {
+            arrivedHtml = "—";
+        } else if (t.arrivedTime) {
             const arrivedClass = isFirst ? "arrived-time" : isSecond ? "arrived-time next" : "arrived-time";
-            arrivedHtml = `<span class="${arrivedClass}">${formatTimeShort(t.arrivedtime)} ✓</span>`;
+            arrivedHtml = `<span class="${arrivedClass}">${formatTimeShort(t.arrivedTime)} ✓</span>`;
         } else {
             arrivedHtml = `<button class="set-arrival-btn" data-id="${t.id}">⏰ Set arrival</button>`;
         }
@@ -256,23 +244,18 @@ function renderTable(tokens) {
         // Booked cell
         const bookedHtml = `
             <div class="booked-cell">
-                <span class="booked-time">${formatTimeShort(t.bookedtime)}</span>
-                <span class="booked-date">${formatDateShort(t.bookedtime)}</span>
+                <span class="booked-time">${formatTimeShort(t.bookedTime)}</span>
+                <span class="booked-date">${formatDateShort(t.bookedTime)}</span>
             </div>`;
 
-        // Action buttons — disabled style for waiting rows
-        const btnStyle = (displayStatus === "waiting" || displayStatus === "skipped") 
-            ? ' style="opacity:0.4"' : '';
-
-        html += `
-        <tr class="${rowClass}">
-            <td>${idx + 1}</td>
-            <td><span class="${tokenClass}">${t.tokenNumber || "—"}</span></td>
-            <td>${t.serviceName || "—"}</td>
-            <td>${bookedHtml}</td>
-            <td class="arrival-cell" data-id="${t.id}">${arrivedHtml}</td>
-            <td><span class="badge ${displayStatus}">${capitalise(displayStatus)}</span></td>
-            <td>
+        // Actions: for cancelled tokens – no buttons at all (empty cell)
+        let actionsHtml = '';
+        if (t.status === 'cancelled') {
+            actionsHtml = `<div class="tbl-actions"></div>`;
+        } else {
+            const btnStyle = (displayStatus === "waiting" || displayStatus === "skipped") 
+                ? ' style="opacity:0.4"' : '';
+            actionsHtml = `
                 <div class="tbl-actions">
                     <button class="icon-btn serve" onclick="actionToken('serve','${t.id}')" title="Serve / Complete"${btnStyle}>
                         <i class="fa-solid fa-check"></i>
@@ -280,14 +263,24 @@ function renderTable(tokens) {
                     <button class="icon-btn skip" onclick="actionToken('skip','${t.id}')" title="Skip"${btnStyle}>
                         <i class="fa-solid fa-xmark"></i>
                     </button>
-                </div>
-            </td>
+                </div>`;
+        }
+
+        html += `
+        <tr class="${rowClass}" data-token-id="${t.id}">
+            <td>${idx + 1}</td>
+            <td><span class="${tokenClass}">${t.tokenNumber || "—"}</span></td>
+            <td>${t.serviceName || "—"}</td>
+            <td>${bookedHtml}</td>
+            <td class="arrival-cell" data-id="${t.id}">${arrivedHtml}</td>
+            <td><span class="badge ${displayStatus}">${capitalise(displayStatus)}</span></td>
+            <td>${actionsHtml}</td>
         </tr>`;
     });
 
     tbody.innerHTML = html;
 
-    // Bind arrival click
+    // Bind arrival click only for non-cancelled tokens (buttons exist only there)
     tbody.querySelectorAll('.set-arrival-btn').forEach(btn => {
         btn.addEventListener('click', e => {
             currentTokenId = e.currentTarget.getAttribute('data-id');
@@ -319,7 +312,6 @@ window.skipCurrentToken = async function () {
 };
 
 window.cancelCurrentToken = async function () {
-    // Cancel = same as skip in the backend for now
     if (!currentServingId) return;
     await actionToken('skip', currentServingId);
 };

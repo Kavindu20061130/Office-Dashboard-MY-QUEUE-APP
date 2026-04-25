@@ -136,25 +136,42 @@ async function fetchWaitingTokens() {
             return;
         }
         
-        container.innerHTML = filtered.map(t => `
-            <div class="token-item ${t.arrivedtime ? 'arrived' : 'waiting'}">
-                <div class="token-number">
-                    ${escapeHtml(t.tokenNumber)}
-                    <span class="badge ${t.arrivedtime ? 'badge-arrived' : 'badge-waiting'}">
-                        ${t.arrivedtime ? 'Arrived' : 'Waiting'}
-                    </span>
+        container.innerHTML = filtered.map(t => {
+            let badgeClass = '';
+            let badgeText = '';
+            let extraHtml = '';
+            
+            if (t.status === 'cancelled') {
+                badgeClass = 'badge-cancelled';
+                badgeText = 'Cancelled';
+                // No arrival time shown for cancelled tokens
+            } else if (t.arrivedTime) {
+                badgeClass = 'badge-arrived';
+                badgeText = 'Arrived';
+                extraHtml = `<div class="token-time">Arrived: ${formatTime(t.arrivedTime)}</div>`;
+            } else {
+                badgeClass = 'badge-waiting';
+                badgeText = 'Waiting';
+            }
+            
+            return `
+                <div class="token-item ${t.arrivedTime ? 'arrived' : 'waiting'}">
+                    <div class="token-number">
+                        ${escapeHtml(t.tokenNumber)}
+                        <span class="badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div class="token-service">${escapeHtml(t.serviceName)}</div>
+                    ${extraHtml}
                 </div>
-                <div class="token-service">${escapeHtml(t.serviceName)}</div>
-                ${t.arrivedtime ? `<div class="token-time">Arrived: ${formatTime(t.arrivedtime)}</div>` : ''}
-            </div>
-        `).join('');
+            `;
+        }).join('');
     } catch (e) {
         console.error("Failed to fetch waiting tokens", e);
         document.getElementById("waitingTokensList").innerHTML = '<div class="error-text">Error loading tokens</div>';
     }
 }
 
-// Process a token scan (arrive or serve)
+// Process a token scan (arrive or serve) – with cancellation check
 async function processScan(tokenId) {
     if (scanInProgress) return;
     scanInProgress = true;
@@ -164,12 +181,22 @@ async function processScan(tokenId) {
         const info = await infoRes.json();
         if (!infoRes.ok) throw new Error(info.error);
         
+        // ❌ IMPORTANT: Check if token is cancelled first
+        if (info.status === "cancelled") {
+            showModal(
+                "Cancelled Token",
+                "error",
+                `<div class="error-text">This token is cancelled. Service cannot be provided. Please book another.</div>`
+            );
+            return;
+        }
+        
         if (info.status === "served") {
             showModal("Already Served", "error", `<div class="error-text">Token "${escapeHtml(tokenId)}" was already served.</div>`);
             return;
         }
         
-        if (info.arrivedtime) {
+        if (info.arrivedTime) {
             // Second scan -> serve
             const serveRes = await fetch("/counterdashboard/scanner/api/serve", {
                 method: "POST",
@@ -196,7 +223,7 @@ async function processScan(tokenId) {
                 <div class="detail-row"><span class="detail-label">Token Number</span><span class="detail-value">${escapeHtml(token.tokenNumber)}</span></div>
                 <div class="detail-row"><span class="detail-label">Service</span><span class="detail-value">${escapeHtml(token.serviceName)}</span></div>
                 <div class="detail-row"><span class="detail-label">Queue</span><span class="detail-value">${escapeHtml(token.queueName)}</span></div>
-                <div class="detail-row"><span class="detail-label">Arrived Time</span><span class="detail-value">${formatTime(token.arrivedtime)}</span></div>
+                <div class="detail-row"><span class="detail-label">Arrived Time</span><span class="detail-value">${formatTime(token.arrivedTime)}</span></div>
             `;
             showModal("✅ Arrival Recorded", "success", detailsHtml, "Scan again to complete service.");
         }

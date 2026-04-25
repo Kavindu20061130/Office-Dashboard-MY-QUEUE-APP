@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Token History - QueueLK{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/history.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="history-container">
+    <div class="breadcrumb">
+        <a href="{{ url_for('dashboard.dashboard_home') }}">Dashboard</a>
+        <span class="separator">></span>
+        <span class="current">Token History</span>
+    </div>
+
+    <div class="page-header">
+        <h1><i class="fa-solid fa-clock-rotate-left"></i> Token History</h1>
+        <p>View and manage tokens that have been served, cancelled, or skipped</p>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-card">
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label><i class="fa-solid fa-square-poll-vertical"></i> Queue</label>
+                <select id="filterQueue">
+                    <option value="">All Queues</option>
+                    {% for q in queues %}
+                    <option value="{{ q.id }}">{{ q.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fa-solid fa-bell-concierge"></i> Service</label>
+                <select id="filterService">
+                    <option value="">All Services</option>
+                    {% for s in services %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fa-solid fa-display"></i> Counter</label>
+                <select id="filterCounter">
+                    <option value="">All Counters</option>
+                    {% for c in counters %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fa-solid fa-calendar"></i> Booked From</label>
+                <input type="date" id="filterDateFrom">
+            </div>
+            <div class="filter-group">
+                <label><i class="fa-solid fa-calendar"></i> Booked To</label>
+                <input type="date" id="filterDateTo">
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-type">
+                <label><i class="fa-solid fa-magnifying-glass"></i> Search by</label>
+                <select id="searchType">
+                    <option value="tokenNumber">Token Number</option>
+                    <option value="tokenId">Token ID</option>
+                </select>
+            </div>
+            <div class="search-input">
+                <input type="text" id="searchValue" placeholder="Enter value...">
+                <button id="searchBtn" class="btn-primary"><i class="fa-solid fa-search"></i> Search</button>
+                <button id="clearFiltersBtn" class="btn-secondary"><i class="fa-solid fa-eraser"></i> Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tokens Table -->
+    <div class="tokens-table-wrapper">
+        <table class="tokens-table" id="historyTable">
+            <thead>
+                <tr>
+                    <th>Token Number</th>
+                    <th>Token ID</th>
+                    <th>Status</th>
+                    <th>Service</th>
+                    <th>Queue</th>
+                    <th>Counter</th>
+                    <th>Position</th>
+                    <th>Booked Time</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody">
+                <tr><td colspan="9" class="loading-state">Loading tokens...</td></table>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Status Change Modal -->
+<div id="statusModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-arrows-rotate"></i> Change Token Status</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="statusModalMessage"></p>
+            <div class="token-details-preview" id="tokenPreview"></div>
+            
+            <!-- NEW: Optional booked date/time editor -->
+            <div class="form-group" style="margin-top: 1rem;">
+                <label><i class="fa-solid fa-calendar"></i> Change Booked Date/Time (Optional)</label>
+                <input type="datetime-local" id="newBookedTime" class="modal-input">
+                <small>Leave empty to keep original booked time.</small>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary cancel-btn">Cancel</button>
+            <button class="btn-primary confirm-btn">Confirm</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}

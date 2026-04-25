@@ -70,6 +70,12 @@
     min-width: 140px;
 }
 
+/* Give the manual token group more space */
+.control-group:has(.manual-input-group) {
+    flex: 2;
+    min-width: 260px;
+}
+
 .control-group label {
     display: block;
     font-size: 0.75rem;
@@ -100,10 +106,16 @@
 .manual-input-group {
     display: flex;
     gap: 8px;
+    width: 100%;
 }
 
 .manual-input-group input {
-    flex: 1;
+    flex: 2;          /* Takes 2 parts of available space */
+    min-width: 220px; /* Ensures enough width for typing */
+}
+
+.manual-input-group button {
+    flex: 0 0 auto;
 }
 
 .btn-primary {

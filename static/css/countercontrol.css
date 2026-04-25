@@ -849,6 +849,35 @@ input:checked + .slider:before {
     background: #6366f1;
 }
 
+
+/* Close button for cancelled tokens */
+.token-btn.close-btn {
+    background: #f97316;      /* Orange color for close action */
+    color: white;
+}
+.token-btn.close-btn:hover {
+    background: #ea580c;
+    transform: scale(0.96);
+}
+
+/* Cancelled token card styling */
+.token-card.cancelled {
+    border-left-color: #f97316;     /* Orange border matching the button */
+    background: #fffaf5;            /* Very light orange/peach background */
+    opacity: 0.9;
+}
+.token-card.cancelled:hover {
+    background: #fff5ed;
+}
+
+/* Optional: adjust the status text inside a cancelled token card */
+.token-card.cancelled .detail-row strong {
+    color: #f97316;
+}
+
+
+
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
     .control-layout {
