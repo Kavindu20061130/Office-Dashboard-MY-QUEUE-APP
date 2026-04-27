@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}User Feedback - QueueLK{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/feedback.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="feedback-container" data-office-id="{{ office_id }}">
+    <h1><i class="fa-solid fa-message"></i> User Feedback</h1>
+    <p class="feedback-subtitle">View, analyze, and manage all customer feedback for <strong>{{ office_name or "your office" }}</strong></p>
+
+    <!-- Filters -->
+    <div class="filters-card">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label><i class="fa-solid fa-clock"></i> Queue</label>
+                <select id="queueFilter"><option value="">All Queues</option></select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fa-solid fa-display"></i> Counter</label>
+                <select id="counterFilter"><option value="">All Counters</option></select>
+            </div>
+            <div class="filter-group">
+                <label><i class="fa-solid fa-gear"></i> Service</label>
+                <select id="serviceFilter"><option value="">All Services</option></select>
+            </div>
+        </div>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label><i class="fa-solid fa-calendar"></i> From Date</label>
+                <input type="date" id="fromDateFilter">
+            </div>
+            <div class="filter-group">
+                <label><i class="fa-solid fa-calendar"></i> To Date</label>
+                <input type="date" id="toDateFilter">
+            </div>
+            <div class="filter-group">
+                <label><i class="fa-solid fa-magnifying-glass"></i> Keyword</label>
+                <input type="text" id="keywordFilter" placeholder="Search by comment, rating...">
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button class="btn btn-primary" id="applyFiltersBtn"><i class="fa-solid fa-filter"></i> Apply Filters</button>
+            <button class="btn btn-outline" id="clearFiltersBtn"><i class="fa-solid fa-eraser"></i> Clear All</button>
+        </div>
+    </div>
+
+    <!-- Analytics -->
+    <div class="top-stats">
+        <div class="analytics-card">
+            <h3><i class="fa-solid fa-star"></i> Total Feedbacks</h3>
+            <div class="analytics-number" id="totalFeedbacks">-</div>
+        </div>
+        <div class="analytics-card">
+            <h3><i class="fa-solid fa-chart-line"></i> Average Rating</h3>
+            <div class="analytics-number" id="avgRating">- / 5</div>
+        </div>
+        <div class="analytics-card">
+            <h3><i class="fa-solid fa-thumbs-up"></i> Most Common Rating</h3>
+            <div class="analytics-number" id="mostCommonRating">-</div>
+            <div class="card-note">Based on user feedback</div>
+        </div>
+    </div>
+
+    <div class="charts-row">
+        <div class="chart-card">
+            <h3><i class="fa-solid fa-chart-pie"></i> Rating Distribution</h3>
+            <canvas id="ratingChart" width="400" height="400"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3><i class="fa-solid fa-chart-bar"></i> Rating Breakdown</h3>
+            <canvas id="ratingBarChart" width="500" height="400"></canvas>
+        </div>
+    </div>
+
+    <div class="full-width-chart">
+        <div class="chart-card">
+            <h3><i class="fa-solid fa-chart-line"></i> Rating Trend (Last 30 Days)</h3>
+            <canvas id="trendLineChart" width="1000" height="350"></canvas>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="feedback-table-wrapper">
+        <table class="feedback-table" id="feedbackTable">
+            <thead>
+                <tr>
+                    <th data-sort="user_name">User <i class="fa-solid fa-arrow-up-wide-short"></i></th>
+                    <th data-sort="rating">Rating <i class="fa-solid fa-arrow-up-wide-short"></i></th>
+                    <th data-sort="comment">Comment <i class="fa-solid fa-arrow-up-wide-short"></i></th>
+                    <th data-sort="service">Service <i class="fa-solid fa-arrow-up-wide-short"></i></th>
+                    <th data-sort="queue">Queue <i class="fa-solid fa-arrow-up-wide-short"></i></th>
+                    <th data-sort="counter">Counter <i class="fa-solid fa-arrow-up-wide-short"></i></th>
+                    <th data-sort="created_at">Date <i class="fa-solid fa-arrow-up-wide-short"></i></th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="feedbacksTableBody">
+                <tr><td colspan="8" class="loading-td"><i class="fa-solid fa-spinner fa-spin"></i> Loading feedbacks...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- Modal for feedback details -->
+<div id="feedbackModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-circle-info"></i> Feedback Details</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="loading-content">
+        <button class="close-loading" onclick="closeLoadingOverlay()">&times;</button>
+        <dotlottie-wc src="https://lottie.host/3d6adda6-880d-4ffc-94b2-50db5e89f1e0/eWLnP5z6OG.lottie" style="width: 200px; height: 200px;" autoplay loop></dotlottie-wc>
+        <p>Loading feedbacks...</p>
+        <small>Click ✕ to close</small>
+    </div>
+</div>
+
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.10/dist/dotlottie-wc.js" type="module"></script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/feedback.js') }}"></script>
+{% endblock %}

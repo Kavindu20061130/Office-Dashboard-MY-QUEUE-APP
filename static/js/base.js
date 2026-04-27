@@ -62,6 +62,9 @@ const toastStyles = `
 .toast.t-error {
     background: #e11d48;
 }
+.toast.t-info {
+    background: #3b82f6;
+}
 `;
 
 const styleSheet = document.createElement("style");

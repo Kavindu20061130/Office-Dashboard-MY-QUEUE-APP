@@ -12,7 +12,8 @@ from routes.queue_management import queue_management
 from routes.qr_scanner import qr_scanner
 from routes.counter_qr_scanner import counter_qr_scanner
 from routes.reports import reports
-from routes.history import history_bp         
+from routes.history import history_bp 
+from routes.feedback import feedback_bp        
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"
@@ -37,7 +38,8 @@ app.register_blueprint(counterdashboard)
 app.register_blueprint(qr_scanner)
 app.register_blueprint(counter_qr_scanner)
 app.register_blueprint(reports)
-app.register_blueprint(history_bp)          
+app.register_blueprint(history_bp)     
+app.register_blueprint(feedback_bp)     
 
 # ---------------- RUN APP ----------------
 if __name__ == "__main__":
