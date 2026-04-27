@@ -1,4 +1,3 @@
-<!-- base.html (updated) -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -62,8 +61,8 @@
             <a href="{{ url_for('qr_scanner.scanner_page') }}" class="nav-item">
                 <i class="fa-solid fa-qrcode"></i>
                 <span>QR Scanner</span>
-
             </a>
+
             <a href="{{ url_for('history.history_page') }}"
                 class="nav-item {% if request.endpoint == 'history.history_page' %}active{% endif %}">
                 <i class="fa-solid fa-clock-rotate-left"></i>
@@ -74,11 +73,16 @@
                 <i class="fa-solid fa-chart-simple"></i>
                 <span>Reports</span>
             </a>
+
+            <a href="{{ url_for('feedback.feedback_page') }}"
+                class="nav-item {% if request.endpoint == 'feedback.feedback_page' %}active{% endif %}">
+                <i class="fa-regular fa-message"></i>
+                <span>User Feedback</span>
+            </a>
         </div>
 
-
-
-        <div class="user-card">
+        <!-- User Card (clickable for logout) -->
+        <div class="user-card" id="userCard" style="cursor: pointer;">
             <div class="avatar">
                 {{ (session.get('user','U')[:1]).upper() }}
             </div>
@@ -96,8 +100,7 @@
         {% if messages %}
         {% for category, message in messages %}
         <div class="flash-message flash-{{ category }}">
-            <i
-                class="fa-solid {% if category == 'success' %}fa-circle-check{% elif category == 'error' %}fa-circle-exclamation{% else %}fa-triangle-exclamation{% endif %}"></i>
+            <i class="fa-solid {% if category == 'success' %}fa-circle-check{% elif category == 'error' %}fa-circle-exclamation{% else %}fa-triangle-exclamation{% endif %}"></i>
             {{ message }}
         </div>
         {% endfor %}
@@ -109,8 +112,24 @@
 
     <div id="toast"></div>
 
-    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
+    <!-- Logout Confirmation Modal (centered) -->
+    <div id="logoutModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header">
+                <h3><i class="fa-regular fa-circle-question"></i> Confirm Logout</h3>
+                <button class="modal-close" onclick="closeLogoutModal()">&times;</button>
+            </div>
+            <div style="padding: 20px 0;">
+                <p style="font-size: 1.1rem; margin-bottom: 20px;">Do you want to log out?</p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button class="btn btn-primary" id="confirmLogoutBtn" style="background: #e11d48;">Yes, Logout</button>
+                    <button class="btn btn-outline" onclick="closeLogoutModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
     <script>
         function showComingSoon() {
             if (typeof showToast !== 'undefined') {
@@ -119,6 +138,34 @@
                 alert('This feature is coming soon!');
             }
         }
+
+        // Logout modal triggered by clicking the user card
+        const userCard = document.getElementById('userCard');
+        const logoutModal = document.getElementById('logoutModal');
+        const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+
+        function showLogoutModal() {
+            logoutModal.style.display = 'flex';   // Use flex to center (CSS .modal has justify/align center)
+        }
+
+        function closeLogoutModal() {
+            logoutModal.style.display = 'none';
+        }
+
+        userCard.addEventListener('click', () => {
+            showLogoutModal();
+        });
+
+        confirmLogoutBtn.addEventListener('click', () => {
+            window.location.href = "{{ url_for('login.logout') }}";
+        });
+
+        // Close modal if user clicks outside modal content
+        window.addEventListener('click', (event) => {
+            if (event.target === logoutModal) {
+                closeLogoutModal();
+            }
+        });
     </script>
 
     {% block extra_js %}{% endblock %}

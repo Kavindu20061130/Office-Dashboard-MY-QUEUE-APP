@@ -1,4 +1,4 @@
-/* base.css (updated) */
+/* base.css (updated) - with logout button and modal */
 
 /* ===== RESET & VARIABLES ===== */
 *,
@@ -183,7 +183,7 @@ body {
 .nav-item:nth-child(4) { --i: 4; }
 .nav-item:nth-child(5) { --i: 5; }
 .nav-item:nth-child(6) { --i: 6; }
-.nav-item:nth-child(7) { --i: 7; } /* Added for Reports */
+.nav-item:nth-child(7) { --i: 7; }
 
 .nav-item i {
     font-size: 1.1rem;
@@ -258,9 +258,7 @@ body {
     opacity: 1;
 }
 
-/* ===== USER CARD (THINNER, NO LINE ABOVE, NORMAL CASE) ===== */
-
-/* ===== USER CARD (THINNER, NO LINE ABOVE, NORMAL CASE) ===== */
+/* ===== USER CARD ===== */
 .user-card {
     background: rgba(0, 0, 0, 0.2);
     padding: 8px 10px;
@@ -274,15 +272,12 @@ body {
     animation: fadeInUp 0.5s ease-out 0.4s both;
     position: relative;
     overflow: hidden;
-    /* FORCE NO TOP BORDER OR LINE */
     border: none !important;
     border-top: none !important;
-    border-image: none !important;
     outline: none !important;
     box-shadow: none !important;
 }
 
-/* Remove any pseudo-element that could create a line */
 .user-card::before {
     content: '';
     position: absolute;
@@ -294,7 +289,6 @@ body {
     opacity: 0;
     transition: opacity 0.4s ease;
     pointer-events: none;
-    /* ensure no border-like rendering */
     border: none;
 }
 .user-card:hover {
@@ -308,7 +302,7 @@ body {
 }
 
 .avatar {
-    width: 36px;  /* thinner profile */
+    width: 36px;
     height: 36px;
     background: white;
     color: var(--primary-green);
@@ -343,7 +337,7 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     transition: transform 0.2s ease;
-    text-transform: none;  /* NORMAL CASE – no ugly all-caps */
+    text-transform: none;
 }
 
 .user-card:hover .user-name {
@@ -403,7 +397,7 @@ body {
     background: transparent;
 }
 
-/* ===== MAIN CONTAINER (ENHANCED) ===== */
+/* ===== MAIN CONTAINER ===== */
 .main-container {
     flex: 1;
     margin-left: 260px;
@@ -510,7 +504,7 @@ body {
     border-left: 6px solid var(--amber);
 }
 
-/* ===== PAGE TITLE & TOP BAR (FIXED UGLY COUNTER CONTROL BAR) ===== */
+/* ===== PAGE TITLE & TOP BAR ===== */
 .main-container h1 {
     font-size: 2rem;
     font-weight: 700;
@@ -558,7 +552,7 @@ body {
     width: 100px;
 }
 
-/* Optional subtitle/stats bar for Counter Control page (can be used inside block) */
+/* Optional subtitle/stats bar */
 .page-header-stats {
     display: flex;
     justify-content: space-between;
@@ -700,7 +694,75 @@ input:focus, select:focus, textarea:focus {
     transform: translateY(-1px);
 }
 
-/* Responsive */
+/* ===== LOGOUT BUTTON (ADDED) ===== */
+.logout-button {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.logout-item {
+    color: #ffb3b3 !important;
+    transition: all 0.2s ease;
+}
+
+.logout-item:hover {
+    background: rgba(220, 38, 38, 0.2) !important;
+    color: #ff6666 !important;
+}
+
+/* ===== MODAL STYLES (for logout confirmation) ===== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    max-width: 600px;
+    margin: 50px auto;
+    border-radius: 28px;
+    padding: 32px;
+    animation: slideInRight 0.3s ease;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #94a3b8;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #e11d48;
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Responsive (existing) */
 @media (max-width: 768px) {
     .sidebar {
         width: 80px;
