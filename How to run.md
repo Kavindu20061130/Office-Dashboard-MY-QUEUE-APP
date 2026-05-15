@@ -83,3 +83,28 @@ python app.py
 
 ## Open in Browser
 http://127.0.0.1:5000
+
+
+
+Testing
+
+# Run all tests with summary (shows category breakdown)
+pytest test.py -v
+
+# Run only blackbox tests
+pytest test.py -v -m blackbox
+
+# Run only whitebox tests
+pytest test.py -v -m whitebox
+
+# Run only security tests
+pytest test.py -v -m security
+
+# Run only performance tests
+pytest test.py -v -m performance
+
+# Run multiple categories
+pytest test.py -v -m "blackbox or security"
+
+# Run all except performance
+pytest test.py -v -m "not performance"
